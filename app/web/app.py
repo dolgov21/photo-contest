@@ -1,5 +1,6 @@
 import asyncio
-from typing import Any, Coroutine, Union
+from collections.abc import Coroutine
+from typing import Any
 
 from loguru import logger
 
@@ -15,7 +16,7 @@ class Application:
     store: Store
     poller: TgApiPoller
 
-    ScraperHooks = Union[Coroutine[Any, Any, Any]]
+    ScraperHooks = Coroutine[Any, Any, Any]
     on_startup: list[ScraperHooks] = None
     on_shutdown: list[ScraperHooks] = None
 
