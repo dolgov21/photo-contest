@@ -39,13 +39,13 @@ def load_config(config_path: str) -> Config:
             port=raw_config["database"]["port"],
             user=raw_config["database"]["user"],
             password=raw_config["database"]["password"],
-            database=raw_config["database"]["database"]
+            database=raw_config["database"]["database"],
         ),
         bot=BotConfig(
             token=raw_config["bot"]["token"],
-            timeout=raw_config["bot"]["timeout"]
-        )
-    )    
+            timeout=raw_config["bot"]["timeout"],
+        ),
+    )
 
 
 def setup_config(app: "Application", config_path: str) -> "Application":

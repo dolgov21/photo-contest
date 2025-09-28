@@ -18,7 +18,7 @@ class Application:
     ScraperHooks = Union[Coroutine[Any, Any, Any]]
     on_startup: List[ScraperHooks] = None
     on_shutdown: List[ScraperHooks] = None
-    
+
     def __init__(self):
         self.on_startup = []
         self.on_shutdown = []
@@ -30,7 +30,7 @@ class Application:
 
     async def setup(self):
         await self._hooks_handler(self.on_startup)
-        
+
     async def close(self):
         await self._hooks_handler(self.on_shutdown)
 
@@ -43,7 +43,7 @@ async def _setup_app(config_path: str):
     setup_store(app)
     setup_poller(app)
     logger.info("setup services")
-    
+
     await app.setup()
     logger.info("setup hooks")
 

@@ -8,6 +8,7 @@ from aiohttp.client import ClientSession, ClientTimeout
 if typing.TYPE_CHECKING:
     from app.web.app import Application
 
+
 class TgApiPoller:
     API_PATH = "https://api.telegram.org/"
 
@@ -16,10 +17,15 @@ class TgApiPoller:
 
         self.last_update_id = 0
         self.polling = False
-        self.session = ClientSession(connector=TCPConnector(verify_ssl=False), timeout=ClientTimeout(total=30))
+        self.session = ClientSession(
+            connector=TCPConnector(verify_ssl=False),
+            timeout=ClientTimeout(total=30),
+        )
 
     def _build_query(self, method: str, params: dict) -> str:
-        base_url = urljoin(self.API_PATH, f"/bot{self.app.config.bot.token}/{method}")
+        base_url = urljoin(
+            self.API_PATH, f"/bot{self.app.config.bot.token}/{method}"
+        )
         return f"{base_url}?{urlencode(params)}"
 
     async def _loop_poll(self):
@@ -27,16 +33,15 @@ class TgApiPoller:
             async with self.session.get(
                 self._build_query(
                     method="getUpdates",
-                    params={
-                        "timeout": 25,
-                        "offset": self.last_update_id + 1
-                    }
+                    params={"timeout": 25, "offset": self.last_update_id + 1},
                 )
             ) as response:
                 data = await response.json()
                 logger.debug(data)
                 if data["result"]:
-                    self.last_update_id = max(update["update_id"] for update in data["result"])
+                    self.last_update_id = max(
+                        update["update_id"] for update in data["result"]
+                    )
 
     async def start(self):
         self.polling = True

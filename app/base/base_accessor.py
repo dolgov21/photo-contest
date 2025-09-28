@@ -4,6 +4,7 @@ from abc import abstractmethod
 if TYPE_CHECKING:
     from app.web.app import Application
 
+
 class BaseAccessor:
     def __init__(self, app: "Application", *args, **kwargs):
         self.app = app

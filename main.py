@@ -15,9 +15,9 @@ if __name__ == "__main__":
         rotation="5MB",
         compression="zip",
         level="DEBUG",
-        enqueue=True
+        enqueue=True,
     )
-    
+
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
