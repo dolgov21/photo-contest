@@ -1,5 +1,5 @@
-from typing import TYPE_CHECKING
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from dotenv import load_dotenv
 from pyaml_env import parse_config

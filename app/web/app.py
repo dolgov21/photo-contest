@@ -1,11 +1,11 @@
 import asyncio
-from typing import Union, Any, Coroutine, List
+from typing import Any, Coroutine, Union
 
 from loguru import logger
 
-from app.store.store import Store, setup_store
-from app.poller.poller import TgApiPoller, setup_poller
 from app.config import Config, setup_config
+from app.poller.poller import TgApiPoller, setup_poller
+from app.store.store import Store, setup_store
 
 __all__ = ("Application",)
 
@@ -16,14 +16,14 @@ class Application:
     poller: TgApiPoller
 
     ScraperHooks = Union[Coroutine[Any, Any, Any]]
-    on_startup: List[ScraperHooks] = None
-    on_shutdown: List[ScraperHooks] = None
+    on_startup: list[ScraperHooks] = None
+    on_shutdown: list[ScraperHooks] = None
 
     def __init__(self):
         self.on_startup = []
         self.on_shutdown = []
 
-    async def _hooks_handler(self, hooks: List[ScraperHooks]):
+    async def _hooks_handler(self, hooks: list[ScraperHooks]):
         for hook in hooks:
             await hook()
             logger.debug(f"{hook} hook был отработан")

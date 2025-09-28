@@ -1,9 +1,9 @@
 import typing
 from urllib.parse import urlencode, urljoin
 
-from loguru import logger
 from aiohttp import TCPConnector
 from aiohttp.client import ClientSession, ClientTimeout
+from loguru import logger
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -22,7 +22,7 @@ class TgApiPoller:
             timeout=ClientTimeout(total=30),
         )
 
-    def _build_query(self, method: str, params: dict) -> str:
+    def _build_query(self, method: str, params: ) -> str:
         base_url = urljoin(
             self.API_PATH, f"/bot{self.app.config.bot.token}/{method}"
         )

@@ -1,5 +1,5 @@
-from typing import TYPE_CHECKING
 from abc import abstractmethod
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.web.app import Application
