@@ -22,7 +22,7 @@ class TgApiPoller:
             timeout=ClientTimeout(total=30),
         )
 
-    def _build_query(self, method: str, params: ) -> str:
+    def _build_query(self, method: str, params: dict) -> str:
         base_url = urljoin(
             self.API_PATH, f"/bot{self.app.config.bot.token}/{method}"
         )
