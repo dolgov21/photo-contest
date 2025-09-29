@@ -55,8 +55,7 @@ async def start_app(config_path: str):
     try:
         app.poller.start()
         logger.info("App started, poller running...")
-        await asyncio.sleep(60)
-        # await asyncio.Event().wait()
+        await asyncio.Event().wait()
     except asyncio.CancelledError:
         logger.info("App shutting down...")
     finally:
