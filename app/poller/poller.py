@@ -34,7 +34,6 @@ class UpdatesPoller:
     async def _process_data(self, data: dict):
         logger.debug(data)
         
-
     async def _loop_poll(self):
         while self.is_running:
             async with self.session.get(
