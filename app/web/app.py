@@ -52,5 +52,13 @@ async def _setup_app(config_path: str):
 async def start_app(config_path: str):
     await _setup_app(config_path)
 
-    poller = asyncio.create_task(app.poller.start())
-    await poller
+    try:
+        app.poller.start()
+        logger.info("App started, poller running...")
+        await asyncio.sleep(60)
+        # await asyncio.Event().wait()
+    except asyncio.CancelledError:
+        logger.info("App shutting down...")
+    finally:
+        await app.poller.stop()
+        logger.info("Poller stopped.")
