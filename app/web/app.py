@@ -5,7 +5,7 @@ from typing import Any
 from loguru import logger
 
 from app.config import Config, setup_config
-from app.poller.poller import TgApiPoller, setup_poller
+from app.poller.poller import UpdatesPoller, setup_poller
 from app.store.store import Store, setup_store
 
 __all__ = ("Application",)
@@ -14,7 +14,7 @@ __all__ = ("Application",)
 class Application:
     config: Config
     store: Store
-    poller: TgApiPoller
+    poller: UpdatesPoller
 
     ScraperHooks = Coroutine[Any, Any, Any]
     on_startup: list[ScraperHooks] = None

@@ -11,7 +11,7 @@ if typing.TYPE_CHECKING:
     from app.web.app import Application
 
 
-class TgApiPoller:
+class UpdatesPoller:
     API_PATH = "https://api.telegram.org/"
 
     def __init__(self, app: "Application"):
@@ -31,6 +31,10 @@ class TgApiPoller:
         )
         return f"{base_url}?{urlencode(params)}"
 
+    async def _process_data(self, data: dict):
+        logger.debug(data)
+        
+
     async def _loop_poll(self):
         while self.is_running:
             async with self.session.get(
@@ -40,7 +44,7 @@ class TgApiPoller:
                 )
             ) as response:
                 data = await response.json()
-                logger.debug(data)
+                self._process_data(data)
                 if data["result"]:
                     self.last_update_id = max(
                         update["update_id"] for update in data["result"]
@@ -69,4 +73,4 @@ class TgApiPoller:
 
 
 def setup_poller(app: "Application"):
-    app.poller = TgApiPoller(app)
+    app.poller = UpdatesPoller(app)
