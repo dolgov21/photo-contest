@@ -1,13 +1,6 @@
-import asyncio
-
 from loguru import logger
 
 from app.web.app import start_app
-
-
-async def main():
-    await start_app("etc/config.yaml")
-
 
 if __name__ == "__main__":
     logger.add(
@@ -19,6 +12,6 @@ if __name__ == "__main__":
     )
 
     try:
-        asyncio.run(main())
+        start_app("etc/config.yaml")
     except KeyboardInterrupt:
         pass

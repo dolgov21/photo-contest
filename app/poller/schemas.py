@@ -1,8 +1,17 @@
 from dataclasses import dataclass
-from typing import Any
+
+
+@dataclass
+class Message:
+    pass
+
+
+@dataclass
+class CallbackQuery:
+    pass
 
 
 @dataclass
 class Update:
     update_id: int
-    payload: Any
+    payload: Message | CallbackQuery

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 @dataclass
 class BotConfig:
     token: str
-    timeout: int
+    timeout: int = 25
 
 
 @dataclass

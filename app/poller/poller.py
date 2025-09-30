@@ -7,23 +7,38 @@ from aiohttp import TCPConnector
 from aiohttp.client import ClientSession, ClientTimeout
 from loguru import logger
 
+from app.base.base_accessor import BaseAccessor
+from app.poller.parser import UpdatesParser
+
 if typing.TYPE_CHECKING:
     from app.web.app import Application
 
 
-class UpdatesPoller:
+class UpdatesPoller(BaseAccessor):
     API_PATH = "https://api.telegram.org/"
 
     def __init__(self, app: "Application"):
+        super().__init__(app)
         self.app = app
 
         self.last_update_id = 0
         self.is_running = False
         self.poll_task: Task | None = None
+        self.session: ClientSession | None = None
+
+    async def connect(self, app: "Application"):
+        self.parser = UpdatesParser(self.app)
         self.session = ClientSession(
-            connector=TCPConnector(verify_ssl=False),
-            timeout=ClientTimeout(total=30),
+            connector=TCPConnector(),
+            timeout=ClientTimeout(total=app.config.bot.timeout + 5),
         )
+
+        self.start()
+        logger.info("Poller running...")
+
+    async def disconnect(self, app: "Application"):
+        await self.stop()
+        logger.info("Poller stopped.")
 
     def _build_query(self, method: str, params: dict) -> str:
         base_url = urljoin(
@@ -31,19 +46,30 @@ class UpdatesPoller:
         )
         return f"{base_url}?{urlencode(params)}"
 
-    async def _process_data(self, data: dict):
-        logger.debug(data)
-        
+    def _process_data(self, data: dict):
+        """Возвращает True, если результат ожидаемый"""
+        if not data.get("ok"):
+            logger.error(f"Telegram API error: {data}")
+            return False
+
+        self.parser.parse_data(data)
+        return True
+
     async def _loop_poll(self):
         while self.is_running:
             async with self.session.get(
                 self._build_query(
                     method="getUpdates",
-                    params={"timeout": 25, "offset": self.last_update_id + 1},
+                    params={
+                        "timeout": self.app.config.bot.timeout,
+                        "offset": self.last_update_id + 1,
+                    },
                 )
             ) as response:
                 data = await response.json()
-                self._process_data(data)
+                if not self._process_data(data):
+                    continue
+
                 if data["result"]:
                     self.last_update_id = max(
                         update["update_id"] for update in data["result"]
@@ -52,7 +78,7 @@ class UpdatesPoller:
     def _done_callback(self, result: Future) -> None:
         if result.exception():
             logger.opt(exception=result.exception()).error(
-                "poller stopped with exception"
+                "Poller stopped with exception"
             )
 
         if self.is_running:
@@ -60,16 +86,16 @@ class UpdatesPoller:
 
     def start(self):
         self.is_running = True
-        logger.info("starting telegram poller...")
         self.poll_task = asyncio.create_task(self._loop_poll())
         self.poll_task.add_done_callback(self._done_callback)
 
     async def stop(self):
         self.is_running = False
-        logger.info("stopping telegram poller...")
+        logger.info("Stopping telegram poller...")
         await self.poll_task
         await self.session.close()
 
 
 def setup_poller(app: "Application"):
     app.poller = UpdatesPoller(app)
+    app.updates_queue = asyncio.Queue()
