@@ -47,7 +47,9 @@ class UpdatesPoller(BaseAccessor):
         return f"{base_url}?{urlencode(params)}"
 
     def _process_data(self, data: dict):
-        """Возвращает True, если результат ожидаемый"""
+        """Если результат ожидаемый,
+        отправляет data на десериализацию в UpdatesParser и возвращает True.
+        """
         if not data.get("ok"):
             logger.error(f"Telegram API error: {data}")
             return False
