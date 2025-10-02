@@ -7,14 +7,14 @@ from aiohttp import TCPConnector
 from aiohttp.client import ClientSession, ClientTimeout
 from loguru import logger
 
-from app.base.base_accessor import BaseAccessor
+from app.base.base_service import BaseService
 from app.poller.parser import UpdatesParser
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
 
 
-class UpdatesPoller(BaseAccessor):
+class UpdatesPoller(BaseService):
     API_PATH = "https://api.telegram.org/"
 
     def __init__(self, app: "Application"):
@@ -25,9 +25,10 @@ class UpdatesPoller(BaseAccessor):
         self.is_running = False
         self.poll_task: Task | None = None
         self.session: ClientSession | None = None
+        self.parser: UpdatesParser | None = None
 
-    async def connect(self, app: "Application"):
-        self.parser = UpdatesParser(self.app)
+    async def startup(self, app: "Application"):
+        self.parser = UpdatesParser(app)
         self.session = ClientSession(
             connector=TCPConnector(),
             timeout=ClientTimeout(total=app.config.bot.timeout + 5),
@@ -36,7 +37,7 @@ class UpdatesPoller(BaseAccessor):
         self.start()
         logger.info("Poller running...")
 
-    async def disconnect(self, app: "Application"):
+    async def shutdown(self, app: "Application"):
         await self.stop()
         logger.info("Poller stopped.")
 

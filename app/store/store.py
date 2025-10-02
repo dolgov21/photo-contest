@@ -6,8 +6,10 @@ if typing.TYPE_CHECKING:
 
 class Store:
     def __init__(self, app: "Application"):
-        self.app = app
+        from app.bot.accessor import BotAccessor
+
+        self.bot = BotAccessor(app)
 
 
-def setup_store(app: "Application") -> None:
+def setup_store(app: "Application"):
     app.store = Store(app)
