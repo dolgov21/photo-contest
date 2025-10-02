@@ -16,7 +16,6 @@ class BotAccessor(BaseAccessor):
     def __init__(self, app: "Application"):
         super().__init__(app)
         self.app = app
-        logger.debug("BotAccessor initialized")
         self.session: ClientSession | None = None
 
     async def connect(self, app: "Application"):
