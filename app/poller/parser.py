@@ -74,7 +74,9 @@ class UpdatesParser:
                 if update_object:
                     self.app.updates_queue.put_nowait(update_object)
 
-                logger.debug(f"Updates in queue: {self.app.updates_queue.qsize()}")
+                logger.debug(
+                    f"Updates in queue: {self.app.updates_queue.qsize()}"
+                )
             except Exception as e:
                 logger.opt(exception=e).error(
                     f"Failed to parse, update_id: {update.get('update_id')}"
