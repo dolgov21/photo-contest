@@ -35,11 +35,11 @@ class UpdatesPoller(BaseService):
         )
 
         self.start()
-        logger.info("Poller running...")
+        logger.info("UpdatesPoller running...")
 
     async def shutdown(self, app: "Application"):
         await self.stop()
-        logger.info("Poller stopped.")
+        logger.info("UpdatesPoller stopped.")
 
     def _build_query(self, method: str, params: dict) -> str:
         base_url = urljoin(
@@ -81,7 +81,7 @@ class UpdatesPoller(BaseService):
     def _done_callback(self, result: Future) -> None:
         if result.exception():
             logger.opt(exception=result.exception()).error(
-                "Poller stopped with exception"
+                "UpdatesPoller stopped with exception"
             )
 
         if self.is_running:
@@ -94,7 +94,7 @@ class UpdatesPoller(BaseService):
 
     async def stop(self):
         self.is_running = False
-        logger.info("Stopping telegram poller...")
+        logger.info("Stopping telegram updates poller...")
         await self.poll_task
         await self.session.close()
 

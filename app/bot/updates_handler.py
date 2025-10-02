@@ -41,14 +41,11 @@ class UpdatesHandler(BaseService):
             logger.opt(exception=result.exception()).error(
                 "Error with handling update"
             )
-
         self.update_tasks.discard(result)
-        logger.debug(f"Updates in queue: {self.app.updates_queue.qsize()}")
 
     async def _loop_handler(self):
         while self.is_running:
             update = await self.app.updates_queue.get()
-            logger.debug("get update")
             update_task = asyncio.create_task(self._process_update(update))
             self.update_tasks.add(update_task)
             update_task.add_done_callback(self._done_callback)
@@ -59,9 +56,9 @@ class UpdatesHandler(BaseService):
 
     async def stop(self):
         self.is_running = False
+        logger.info("Stopping updates handler...")
         self.loop_handler_task.cancel()
         await asyncio.gather(*self.update_tasks, return_exceptions=True)
-        logger.info("Stopping updates handler...")
 
 
 def setup_handler(app: "Application"):

@@ -43,7 +43,7 @@ def load_config(config_path: str) -> Config:
         ),
         bot=BotConfig(
             token=raw_config["bot"]["token"],
-            timeout=raw_config["bot"]["timeout"],
+            timeout=raw_config["bot"].get("timeout", 25),
         ),
     )
 

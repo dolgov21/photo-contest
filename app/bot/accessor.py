@@ -24,26 +24,25 @@ class BotAccessor(BaseAccessor):
             connector=TCPConnector(),
             timeout=ClientTimeout(total=app.config.bot.timeout + 5),
         )
-        logger.info("UpdatesHandler running...")
+        logger.info("BotAccessor running...")
 
     async def disconnect(self, app: "Application"):
         await self.session.close()
-        logger.info("UpdatesHandler stopped.")
+        logger.info("BotAccessor stopped.")
 
     def _build_query(self, method: str, params: dict) -> str:
         base_url = urljoin(
             self.API_PATH, f"/bot{self.app.config.bot.token}/{method}"
         )
-        logger.debug(f"{base_url}?{urlencode(params)}")
         return f"{base_url}?{urlencode(params)}"
 
-    async def send_message(self, chat_id: int, text: str):
-        logger.debug("enter to the send_message")
+    async def send_message(
+            self, chat_id: int, text: str
+        ) -> dict:
         async with self.session.get(
             self._build_query(
                 "sendMessage",
                 params={"chat_id": chat_id, "text": text},
             )
         ) as response:
-            data = await response.json()
-            logger.debug(data)
+            return await response.json()
