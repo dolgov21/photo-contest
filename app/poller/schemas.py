@@ -3,8 +3,6 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
-__all__ = ["CallbackQuery", "Chat", "ChatTypes", "Message", "Update", "User"]
-
 
 class ChatTypes(StrEnum):
     PRIVATE = "private"

@@ -11,8 +11,6 @@ from app.config import Config, setup_config
 from app.poller.poller import UpdatesPoller, setup_poller
 from app.store.store import Store, setup_store
 
-__all__ = ("Application",)
-
 
 class Application(AiohttpApplication):
     config: Config
