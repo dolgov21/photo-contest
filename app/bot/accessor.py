@@ -35,9 +35,7 @@ class BotAccessor(BaseAccessor):
         )
         return f"{base_url}?{urlencode(params)}"
 
-    async def send_message(
-            self, chat_id: int, text: str
-        ) -> dict:
+    async def send_message(self, chat_id: int, text: str) -> dict:
         async with self.session.get(
             self._build_query(
                 "sendMessage",
