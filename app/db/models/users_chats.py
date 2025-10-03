@@ -9,9 +9,7 @@ __all__ = ("ChatModel", "UserChatsModel", "UserModel")
 class UserModel(Base, TimestampMixin):
     __tablename__ = "users"
 
-    user_id: Mapped[int] = mapped_column(
-        primary_key=True, autoincrement=False
-    )
+    user_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
     first_name: Mapped[str] = mapped_column(nullable=False)
     last_name: Mapped[str | None] = mapped_column(nullable=True)
     username: Mapped[str | None] = mapped_column(nullable=True)
