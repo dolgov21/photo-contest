@@ -22,7 +22,7 @@ class Chat(BaseModel):
 class User(BaseModel):
     id: int
     is_bot: bool
-    first_name: str | None = None
+    first_name: str
     last_name: str | None = None
     username: str | None = None
 
