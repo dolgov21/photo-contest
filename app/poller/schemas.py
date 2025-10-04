@@ -27,18 +27,34 @@ class User(BaseModel):
     username: str | None = None
 
 
+class InlineKeyboardButton(BaseModel):
+    text: str
+    callback_data: str | None = None
+    url: str | None = None
+
+
+class InlineKeyboard(BaseModel):
+    inline_keyboard: list[list[InlineKeyboardButton]]
+
+
+class ReplyKeyboard(BaseModel):
+    ...
+
+
 class Message(BaseModel):
     message_id: int
     from_user: User
     chat: Chat
     text: str | None
     date_time: datetime
+    reply_markup: ReplyKeyboard | InlineKeyboard | None
 
 
 class CallbackQuery(BaseModel):
     id: int
     from_user: User
     message: Message
+    data: str
 
 
 class Update(BaseModel):

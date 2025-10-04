@@ -4,8 +4,10 @@ from asyncio import Future, Task
 
 from loguru import logger
 
-from app.base.base_service import BaseService
 from app.poller.schemas import Update
+from app.base.base_service import BaseService
+from app.bot.handlers import router as handlers_router
+from app.bot.callbacks import router as callbacks_router
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -29,12 +31,16 @@ class UpdatesHandler(BaseService):
         await self.stop()
         logger.info("UpdatesHandler stopped.")
 
-    async def _process_update(self, update: Update):
+    def _process_update(self, update: Update):
         if update.message:
-            await self.app.store.bot.send_message(
-                chat_id=update.message.chat.id,
-                text=update.message.text,
-            )
+            update_task = asyncio.create_task(handlers_router.handle(self.app, update))
+            self.update_tasks.add(update_task)
+            update_task.add_done_callback(self._done_callback)
+
+        if update.callback_query:
+            update_task = asyncio.create_task(callbacks_router.handle(self.app, update))
+            self.update_tasks.add(update_task)
+            update_task.add_done_callback(self._done_callback)
 
     def _done_callback(self, result: Future) -> None:
         if result.exception():
@@ -46,9 +52,7 @@ class UpdatesHandler(BaseService):
     async def _loop_handler(self):
         while self.is_running:
             update = await self.app.updates_queue.get()
-            update_task = asyncio.create_task(self._process_update(update))
-            self.update_tasks.add(update_task)
-            update_task.add_done_callback(self._done_callback)
+            self._process_update(update)
 
     def start(self):
         self.is_running = True

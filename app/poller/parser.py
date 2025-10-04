@@ -8,6 +8,9 @@ from app.poller.schemas import (
     CallbackQuery,
     Chat,
     Message,
+    InlineKeyboard,
+    ReplyKeyboard,
+    InlineKeyboardButton,
     Update,
     User,
 )
@@ -21,10 +24,20 @@ class UpdatesParser:
         self.app = app
 
     def _extract_chat(self, chat: dict) -> Chat:
-        return Chat(**chat)
+        return Chat.model_validate(chat)
 
     def _extract_user(self, from_user: dict) -> User:
-        return User(**from_user)
+        return User.model_validate(from_user)
+
+    def _extract_reply_markup(self, reply_markup: dict | None) -> InlineKeyboard | ReplyKeyboard | None:
+        if reply_markup is None:
+            return None
+
+        if "inline_keyboard" in reply_markup:
+            return InlineKeyboard.model_validate(reply_markup)
+
+        if "keyboard" in reply_markup:
+            return None
 
     def _extract_message(self, message: dict) -> Message:
         return Message(
@@ -32,6 +45,7 @@ class UpdatesParser:
             from_user=self._extract_user(message["from"]),
             chat=self._extract_chat(message["chat"]),
             text=message.get("text"),
+            reply_markup=self._extract_reply_markup(message.get("reply_markup")),
             date_time=datetime.fromtimestamp(message["date"]),
         )
 
@@ -40,6 +54,7 @@ class UpdatesParser:
             id=callback_query["id"],
             from_user=self._extract_user(callback_query["from"]),
             message=self._extract_message(callback_query["message"]),
+            data=callback_query["data"],
         )
 
     @logger.catch(ValidationError)
