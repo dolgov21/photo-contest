@@ -45,7 +45,7 @@ class Database:
     async def connect(self, *args: Any, **kwargs: Any):
         self.engine = create_async_engine(
             url=self.get_db_url(self.app.config.database),
-            echo=self.app.config.database.echo
+            echo=self.app.config.database.echo,
         )
 
         self.sessionmaker = async_sessionmaker(

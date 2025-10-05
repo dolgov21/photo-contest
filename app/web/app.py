@@ -8,8 +8,8 @@ from loguru import logger
 
 from app.bot.updates_handler import UpdatesHandler, setup_handler
 from app.config import Config, setup_config
-from app.poller.poller import UpdatesPoller, setup_poller
 from app.db.database import Database, setup_database
+from app.poller.poller import UpdatesPoller, setup_poller
 from app.store.store import Store, setup_store
 
 
