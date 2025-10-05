@@ -13,6 +13,8 @@ class DatabaseAccessor:
     def __init__(self, app: "Application"):
         self.app = app
 
+    async def create_user(self, user_id: int) -> UserModel | None: ...
+
     async def create_contest(self, chat_id: int) -> ContestModel:
         contest = ContestModel(chat_id=chat_id, is_active=True)
         async with self.app.database.sessionmaker() as session:

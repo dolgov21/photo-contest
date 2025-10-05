@@ -8,7 +8,7 @@ from app.db.database import Base, TimestampMixin
 if typing.TYPE_CHECKING:
     from app.db.models.users_chats import ChatModel, UserModel
 
-__all__ = ("ContestModel", "MatchModel", "RoundModel",)
+__all__ = ("ContestModel", "MatchModel", "RoundModel")
 
 
 class ContestModel(Base, TimestampMixin):
@@ -19,12 +19,17 @@ class ContestModel(Base, TimestampMixin):
         ForeignKey("chats.chat_id", ondelete="CASCADE"), nullable=False
     )
     is_active: Mapped[bool] = mapped_column(default=True)
-
+ 
     chat: Mapped["ChatModel"] = relationship(
         "ChatModel", back_populates="contests"
     )
     rounds: Mapped[list["RoundModel"]] = relationship(
         "RoundModel", back_populates="contest", cascade="all, delete"
+    )
+    contests: Mapped[list["ContestModel"]] = relationship(
+        "ContestModel",
+        secondary="contest_participants",
+        back_populates="participants",
     )
 
 

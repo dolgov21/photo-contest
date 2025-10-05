@@ -3,7 +3,18 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base, TimestampMixin
 
-__all__ = ("ChatModel", "UserChatsModel", "UserModel")
+__all__ = ("ChatModel", "UsersChatsModel", "UserModel", "ContestsParticipantsModel")
+
+
+class ContestsParticipantsModel(Base, TimestampMixin):
+    __tablename__ = "contests_participants"
+
+    contest_id: Mapped[int] = mapped_column(
+        ForeignKey("contests.contest_id", ondelete="CASCADE"), primary_key=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True
+    )
 
 
 class UserModel(Base, TimestampMixin):
@@ -38,7 +49,7 @@ class ChatModel(Base, TimestampMixin):
     )
 
 
-class UserChatsModel(Base, TimestampMixin):
+class UsersChatsModel(Base, TimestampMixin):
     __tablename__ = "users_chats"
 
     user_id: Mapped[int] = mapped_column(
