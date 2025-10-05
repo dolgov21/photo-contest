@@ -5,10 +5,11 @@ from urllib.parse import urlencode, urljoin
 
 from aiohttp import TCPConnector
 from aiohttp.client import ClientSession, ClientTimeout
+from pydantic import ValidationError
 from loguru import logger
 
 from app.base.base_service import BaseService
-from app.poller.parser import UpdatesParser
+from app.poller.schemas import Update
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -25,10 +26,8 @@ class UpdatesPoller(BaseService):
         self.is_running = False
         self.poll_task: Task | None = None
         self.session: ClientSession | None = None
-        self.parser: UpdatesParser | None = None
 
     async def startup(self, app: "Application"):
-        self.parser = UpdatesParser(app)
         self.session = ClientSession(
             connector=TCPConnector(),
             timeout=ClientTimeout(total=app.config.bot.timeout + 5),
@@ -47,15 +46,32 @@ class UpdatesPoller(BaseService):
         )
         return f"{base_url}?{urlencode(params)}"
 
+    def _parse_updates(self, data: dict) -> list[Update]:
+        updates = data.get("result", [])
+        logger.debug(f"Received updates: {updates}")
+
+        updates_obj = []
+        for raw in updates:
+            try:
+                update = Update.model_validate(raw)
+                updates_obj.append(update)
+                logger.debug(f"Produced update: {update}")
+            except ValidationError as e:
+                logger.opt(exception=e).error(
+                    f"Failed to parse, update_id: {raw.get('update_id')}"
+                )
+        return updates_obj
+
+    def _add_queue_updates(self, updates: list[Update]):
+        for update in updates:
+            self.app.updates_queue.put_nowait(update)
+            logger.debug(f"Updates in queue: {self.app.updates_queue.qsize()}")
+
     def _process_data(self, data: dict):
-        """Если результат ожидаемый,
-        отправляет data на десериализацию в UpdatesParser и возвращает True.
-        """
+        """Возвращает True, если результат ожидаемый."""
         if not data.get("ok"):
             logger.error(f"Telegram API error: {data}")
             return False
-
-        self.parser.parse_data(data)
         return True
 
     async def _loop_poll(self):
@@ -73,9 +89,12 @@ class UpdatesPoller(BaseService):
                 if not self._process_data(data):
                     continue
 
-                if data["result"]:
+                updates = self._parse_updates(data)
+                self._add_queue_updates(updates)
+
+                if updates:
                     self.last_update_id = max(
-                        update["update_id"] for update in data["result"]
+                        update.update_id for update in updates
                     )
 
     def _done_callback(self, result: Future) -> None:
@@ -95,7 +114,8 @@ class UpdatesPoller(BaseService):
     async def stop(self):
         self.is_running = False
         logger.info("Stopping telegram updates poller...")
-        await self.poll_task
+        if self.poll_task:
+            await self.poll_task
         await self.session.close()
 
 

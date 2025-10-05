@@ -41,18 +41,27 @@ class ReplyKeyboard(BaseModel):
     ...
 
 
+class PhotoSize(BaseModel):
+    file_id: str
+    file_unique_id: str
+    width: int
+    height: int
+    file_size: int | None = None
+
+
 class Message(BaseModel):
     message_id: int
-    from_user: User
+    from_user: User = Field(alias="from")
     chat: Chat
     text: str | None
-    date_time: datetime
-    reply_markup: ReplyKeyboard | InlineKeyboard | None
+    date_time: datetime = Field(alias="date")
+    reply_markup: ReplyKeyboard | InlineKeyboard | None = None
+    photo: list[PhotoSize] | None = None
 
 
 class CallbackQuery(BaseModel):
     id: int
-    from_user: User
+    from_user: User = Field(alias="from")
     message: Message
     data: str
 
