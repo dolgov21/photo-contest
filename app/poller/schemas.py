@@ -37,8 +37,7 @@ class InlineKeyboard(BaseModel):
     inline_keyboard: list[list[InlineKeyboardButton]]
 
 
-class ReplyKeyboard(BaseModel):
-    ...
+class ReplyKeyboard(BaseModel): ...
 
 
 class PhotoSize(BaseModel):
