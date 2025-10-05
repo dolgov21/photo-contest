@@ -18,7 +18,6 @@ class UpdatesHandler(BaseService):
         super().__init__(app)
         self.app = app
 
-        self.last_update_id = 0
         self.is_running = False
         self.update_tasks: set[Task] = set()
         self.loop_handler_task: Task = None
@@ -66,4 +65,4 @@ class UpdatesHandler(BaseService):
 
 
 def setup_handler(app: "Application"):
-    app.poller = UpdatesHandler(app)
+    app.handler = UpdatesHandler(app)

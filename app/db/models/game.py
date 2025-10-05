@@ -3,7 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base, TimestampMixin
 
-__all__ = ("ContestModel", "MatchModel", "RoundModel", "ChatModel", "UserModel",)
+__all__ = ("ContestModel", "MatchModel", "RoundModel", "ChatModel", "UserModel", "ContestsParticipantsModel",)
 
 
 class ContestsParticipantsModel(Base, TimestampMixin):
@@ -15,6 +15,9 @@ class ContestsParticipantsModel(Base, TimestampMixin):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True
     )
+
+# TODO поработать над поддержанием уелостности БД.
+
 
 
 class UserModel(Base, TimestampMixin):
@@ -50,7 +53,7 @@ class ChatModel(Base, TimestampMixin):
 class ContestModel(Base, TimestampMixin):
     __tablename__ = "contests"
 
-    contest_id: Mapped[int] = mapped_column(primary_key=True)
+    contest_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     chat_id: Mapped[int] = mapped_column(
         ForeignKey("chats.chat_id", ondelete="CASCADE"), nullable=False
     )
@@ -81,7 +84,7 @@ class ContestModel(Base, TimestampMixin):
 class RoundModel(Base, TimestampMixin):
     __tablename__ = "rounds"
 
-    round_id: Mapped[int] = mapped_column(primary_key=True)
+    round_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     contest_id: Mapped[int] = mapped_column(
         ForeignKey("contests.contest_id", ondelete="CASCADE"), nullable=False
     )
@@ -99,7 +102,7 @@ class RoundModel(Base, TimestampMixin):
 class MatchModel(Base, TimestampMixin):
     __tablename__ = "matches"
 
-    match_id: Mapped[int] = mapped_column(primary_key=True)
+    match_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     round_id: Mapped[int] = mapped_column(
         ForeignKey("rounds.round_id", ondelete="CASCADE"), nullable=False
     )
