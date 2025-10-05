@@ -1,6 +1,5 @@
 import json
 import typing
-from urllib.parse import urlencode, urljoin
 
 from aiohttp import ClientSession, ClientTimeout, TCPConnector
 from loguru import logger
@@ -30,12 +29,6 @@ class BotAccessor(BaseAccessor):
     async def disconnect(self, app: "Application"):
         await self.session.close()
         logger.info("BotAccessor stopped.")
-
-    # def _build_query(self, method: str, params: dict) -> str:
-    #     base_url = urljoin(
-    #         self.API_PATH, f"/bot{self.app.config.bot.token}/{method}"
-    #     )
-    #     return f"{base_url}?{urlencode(params)}"
 
     async def send_message(
         self,
