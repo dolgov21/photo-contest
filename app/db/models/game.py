@@ -1,14 +1,50 @@
-import typing
-
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base, TimestampMixin
 
-if typing.TYPE_CHECKING:
-    from app.db.models.users_chats import ChatModel, UserModel
+__all__ = ("ContestModel", "MatchModel", "RoundModel", "ChatModel", "UserModel",)
 
-__all__ = ("ContestModel", "MatchModel", "RoundModel")
+
+class ContestsParticipantsModel(Base, TimestampMixin):
+    __tablename__ = "contests_participants"
+
+    contest_id: Mapped[int] = mapped_column(
+        ForeignKey("contests.contest_id", ondelete="CASCADE"), primary_key=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True
+    )
+
+
+class UserModel(Base, TimestampMixin):
+    __tablename__ = "users"
+
+    user_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    first_name: Mapped[str] = mapped_column(nullable=False)
+    last_name: Mapped[str | None] = mapped_column(nullable=True)
+    username: Mapped[str | None] = mapped_column(nullable=True)
+    photo_id: Mapped[str | None] = mapped_column(nullable=True)
+
+    contests: Mapped[list["ContestModel"]] = relationship(
+        "ContestModel",
+        secondary="contests_participants",
+        back_populates="participants",
+    )
+
+
+class ChatModel(Base, TimestampMixin):
+    __tablename__ = "chats"
+
+    chat_id: Mapped[int] = mapped_column(
+        primary_key=True, autoincrement=False
+    )
+    title: Mapped[str | None] = mapped_column(nullable=True)
+    username: Mapped[str | None] = mapped_column(nullable=True)
+
+    contests: Mapped[list["ContestModel"]] = relationship(
+        "ContestModel", back_populates="chats", cascade="all, delete"
+    )
 
 
 class ContestModel(Base, TimestampMixin):
@@ -19,17 +55,26 @@ class ContestModel(Base, TimestampMixin):
         ForeignKey("chats.chat_id", ondelete="CASCADE"), nullable=False
     )
     is_active: Mapped[bool] = mapped_column(default=True)
- 
+    creator_id: Mapped[int] = mapped_column(
+        ForeignKey("users.user_id", ondelete="CASCADE"),  
+        nullable=False
+    )
+
     chat: Mapped["ChatModel"] = relationship(
         "ChatModel", back_populates="contests"
+    )
+    participants: Mapped[list["UserModel"]] = relationship(
+        "UserModel",
+        secondary="contests_participants",
+        back_populates="contests",
     )
     rounds: Mapped[list["RoundModel"]] = relationship(
         "RoundModel", back_populates="contest", cascade="all, delete"
     )
     contests: Mapped[list["ContestModel"]] = relationship(
         "ContestModel",
-        secondary="contest_participants",
-        back_populates="participants",
+        secondary="contests_participants",
+        back_populates="contests",
     )
 
 
