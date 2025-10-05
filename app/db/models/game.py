@@ -1,9 +1,16 @@
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base, TimestampMixin
 
-__all__ = ("ContestModel", "MatchModel", "RoundModel", "ChatModel", "UserModel", "ContestsParticipantsModel",)
+__all__ = (
+    "ContestModel",
+    "MatchModel",
+    "RoundModel",
+    "ChatModel",
+    "UserModel",
+    "ContestsParticipantsModel",
+)
 
 
 class ContestsParticipantsModel(Base, TimestampMixin):
@@ -12,18 +19,24 @@ class ContestsParticipantsModel(Base, TimestampMixin):
     contest_id: Mapped[int] = mapped_column(
         ForeignKey("contests.contest_id", ondelete="CASCADE"), primary_key=True
     )
-    user_id: Mapped[int] = mapped_column(
+    user_id: Mapped[BigInteger] = mapped_column(
         ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True
     )
 
-# TODO поработать над поддержанием уелостности БД.
+
+
+
+# TODO поработать над поддержанием целостности БД. unique?
+
 
 
 
 class UserModel(Base, TimestampMixin):
     __tablename__ = "users"
 
-    user_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, primary_key=True, autoincrement=False
+    )
     first_name: Mapped[str] = mapped_column(nullable=False)
     last_name: Mapped[str | None] = mapped_column(nullable=True)
     username: Mapped[str | None] = mapped_column(nullable=True)
@@ -40,27 +53,32 @@ class ChatModel(Base, TimestampMixin):
     __tablename__ = "chats"
 
     chat_id: Mapped[int] = mapped_column(
-        primary_key=True, autoincrement=False
+        BigInteger, primary_key=True, autoincrement=False
     )
     title: Mapped[str | None] = mapped_column(nullable=True)
     username: Mapped[str | None] = mapped_column(nullable=True)
 
     contests: Mapped[list["ContestModel"]] = relationship(
-        "ContestModel", back_populates="chats", cascade="all, delete"
+        "ContestModel", back_populates="chat", cascade="all, delete"
     )
 
 
 class ContestModel(Base, TimestampMixin):
     __tablename__ = "contests"
 
-    contest_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    contest_id: Mapped[int] = mapped_column(
+        primary_key=True, autoincrement=True
+    )
     chat_id: Mapped[int] = mapped_column(
-        ForeignKey("chats.chat_id", ondelete="CASCADE"), nullable=False
+        BigInteger,
+        ForeignKey("chats.chat_id", ondelete="CASCADE"),
+        nullable=False,
     )
     is_active: Mapped[bool] = mapped_column(default=True)
     creator_id: Mapped[int] = mapped_column(
-        ForeignKey("users.user_id", ondelete="CASCADE"),  
-        nullable=False
+        BigInteger,
+        ForeignKey("users.user_id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     chat: Mapped["ChatModel"] = relationship(
@@ -73,11 +91,6 @@ class ContestModel(Base, TimestampMixin):
     )
     rounds: Mapped[list["RoundModel"]] = relationship(
         "RoundModel", back_populates="contest", cascade="all, delete"
-    )
-    contests: Mapped[list["ContestModel"]] = relationship(
-        "ContestModel",
-        secondary="contests_participants",
-        back_populates="contests",
     )
 
 
@@ -108,10 +121,14 @@ class MatchModel(Base, TimestampMixin):
     )
 
     user1_id: Mapped[int] = mapped_column(
-        ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False
+        BigInteger,
+        ForeignKey("users.user_id", ondelete="CASCADE"),
+        nullable=False,
     )
     user2_id: Mapped[int] = mapped_column(
-        ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False
+        BigInteger,
+        ForeignKey("users.user_id", ondelete="CASCADE"),
+        nullable=False,
     )
     votes_user1: Mapped[int] = mapped_column(default=0, nullable=False)
     votes_user2: Mapped[int] = mapped_column(default=0, nullable=False)
