@@ -8,7 +8,7 @@ from app.db.database import Base, TimestampMixin
 if typing.TYPE_CHECKING:
     from app.db.models.users_chats import ChatModel, UserModel
 
-__all__ = ("ContestModel", "MatchModel", "RoundModel", "VoteModel")
+__all__ = ("ContestModel", "MatchModel", "RoundModel",)
 
 
 class ContestModel(Base, TimestampMixin):
@@ -18,7 +18,6 @@ class ContestModel(Base, TimestampMixin):
     chat_id: Mapped[int] = mapped_column(
         ForeignKey("chats.chat_id", ondelete="CASCADE"), nullable=False
     )
-    title: Mapped[str] = mapped_column(nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True)
 
     chat: Mapped["ChatModel"] = relationship(
@@ -61,6 +60,8 @@ class MatchModel(Base, TimestampMixin):
     user2_id: Mapped[int] = mapped_column(
         ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False
     )
+    votes_user1: Mapped[int] = mapped_column(default=0, nullable=False)
+    votes_user2: Mapped[int] = mapped_column(default=0, nullable=False)
     winner_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True
     )
@@ -76,33 +77,4 @@ class MatchModel(Base, TimestampMixin):
     )
     winner: Mapped["UserModel"] = relationship(
         "UserModel", foreign_keys=[winner_id]
-    )
-
-    votes: Mapped[list["VoteModel"]] = relationship(
-        "VoteModel", back_populates="match", cascade="all, delete"
-    )
-
-
-class VoteModel(Base, TimestampMixin):
-    __tablename__ = "votes"
-
-    vote_id: Mapped[int] = mapped_column(primary_key=True)
-    match_id: Mapped[int] = mapped_column(
-        ForeignKey("matches.match_id", ondelete="CASCADE"), nullable=False
-    )
-    voter_id: Mapped[int] = mapped_column(
-        ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False
-    )
-    voted_for_id: Mapped[int] = mapped_column(
-        ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False
-    )
-
-    match: Mapped["MatchModel"] = relationship(
-        "MatchModel", back_populates="votes"
-    )
-    voter: Mapped["UserModel"] = relationship(
-        "UserModel", foreign_keys=[voter_id]
-    )
-    voted_for: Mapped["UserModel"] = relationship(
-        "UserModel", foreign_keys=[voted_for_id]
     )
