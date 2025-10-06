@@ -24,13 +24,6 @@ class ContestsParticipantsModel(Base, TimestampMixin):
     )
 
 
-
-
-# TODO поработать над поддержанием целостности БД. unique?
-
-
-
-
 class UserModel(Base, TimestampMixin):
     __tablename__ = "users"
 
@@ -74,6 +67,7 @@ class ContestModel(Base, TimestampMixin):
         ForeignKey("chats.chat_id", ondelete="CASCADE"),
         nullable=False,
     )
+    current_round: Mapped[int] = mapped_column(default=1, nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True)
     creator_id: Mapped[int] = mapped_column(
         BigInteger,
