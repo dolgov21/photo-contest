@@ -70,7 +70,7 @@ class ContestModel(Base, TimestampMixin):
         nullable=False,
     )
     current_round: Mapped[int] = mapped_column(default=1, nullable=False)
-    is_active: Mapped[bool] = mapped_column(default=True)
+    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
     registration_deadline: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -101,7 +101,7 @@ class RoundModel(Base, TimestampMixin):
         ForeignKey("contests.contest_id", ondelete="CASCADE"), nullable=False
     )
     round_number: Mapped[int] = mapped_column(nullable=False)
-    is_finished: Mapped[bool] = mapped_column(default=False)
+    is_finished: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     contest: Mapped["ContestModel"] = relationship(
         "ContestModel", back_populates="rounds"
@@ -134,6 +134,7 @@ class MatchModel(Base, TimestampMixin):
     winner_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True
     )
+    is_finished: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     round: Mapped["RoundModel"] = relationship(
         "RoundModel", back_populates="matches"
