@@ -1,4 +1,6 @@
-from sqlalchemy import ForeignKey, BigInteger
+from datetime import datetime
+
+from sqlalchemy import ForeignKey, BigInteger, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base, TimestampMixin
@@ -69,6 +71,9 @@ class ContestModel(Base, TimestampMixin):
     )
     current_round: Mapped[int] = mapped_column(default=1, nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True)
+    registration_deadline: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     creator_id: Mapped[int] = mapped_column(
         BigInteger,
         ForeignKey("users.user_id", ondelete="CASCADE"),
