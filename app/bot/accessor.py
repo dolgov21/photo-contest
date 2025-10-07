@@ -207,12 +207,10 @@ class BotAccessor(BaseAccessor):
         reply_markup: InlineKeyboard,
     ) -> Message:
         try:
-            # 1. Сначала отправляем медиагруппу с фото
             media_group_response = await self.send_media_group(chat_id, media)
             
             if not media_group_response or not media_group_response.ok:
                 logger.error("Failed to send media group")
-                # Fallback: отправляем только сообщение с кнопками
                 return await self.send_message(
                     chat_id=chat_id,
                     text=question_text,
@@ -221,7 +219,6 @@ class BotAccessor(BaseAccessor):
             
             logger.info(f"Media group sent successfully with {len(media)} photos")
             
-            # 2. Затем отправляем сообщение с вопросом и кнопками
             question_message = await self.send_message(
                 chat_id=chat_id,
                 text=question_text,
@@ -234,7 +231,6 @@ class BotAccessor(BaseAccessor):
             
         except Exception as e:
             logger.opt(exception=e).error("Error in send_media_group_with_keyboard")
-            # Fallback: отправляем только сообщение с кнопками
             return await self.send_message(
                 chat_id=chat_id,
                 text=question_text,
