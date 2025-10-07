@@ -192,7 +192,7 @@ class BotAccessor(BaseAccessor):
             "chat_id": chat_id,
             "media": media_data,
         }
-        logger.debug(f"params: {params}")
+
         async with self.session.post(
             url=f"{self.API_PATH}bot{self.app.config.bot.token}/sendMediaGroup",
             json=params,
@@ -216,8 +216,6 @@ class BotAccessor(BaseAccessor):
                     text=question_text,
                     reply_markup=reply_markup
                 )
-            
-            logger.info(f"Media group sent successfully with {len(media)} photos")
             
             question_message = await self.send_message(
                 chat_id=chat_id,

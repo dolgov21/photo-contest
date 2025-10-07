@@ -13,7 +13,6 @@ from app.poller.schemas import (
     Update,
     ReplyParameters,
     InputMediaPhoto,
-    Message,
 )
 
 if typing.TYPE_CHECKING:
@@ -26,7 +25,10 @@ router = Router()
 async def start(app: "Application", update: Update):
     await app.store.bot.send_message(
         update.message.chat.id,
-        f"Привет! Отправь /start_game, чтобы начать конкурс.",
+        "👋 Привет! Добро пожаловать в <b>Фотоконкурс</b>! 📸\n\n"
+        "Бот устроит турнир на выбывание среди участников чата — кто победит, решит голосование! 🏆\n\n"
+        "Отправь <code>/start_game</code>, чтобы начать первый раунд.",
+        parse_mode="HTML",
     )
 
 
@@ -55,8 +57,10 @@ async def start_game(app: "Application", update: Update):
         if active_contest.registration_deadline > now_moscow:
             await app.store.bot.send_message(
                 update.message.chat.id,
-                f"⏳ Регистрация на текущую игру ещё не завершена."
-                f"Дождитесь окончания регистрации. {active_contest.registration_deadline}",
+                f"⏳ Регистрация на текущий фотоконкурс ещё идёт!\n"
+                f"Пожалуйста, дождитесь её завершения — "
+                f"окончание регистрации: <b>{active_contest.registration_deadline.strftime('%H:%M:%S')}</b>.",
+                parse_mode="HTML",
                 reply_parameters=ReplyParameters(
                     message_id=update.message.message_id
                 ),
@@ -73,22 +77,30 @@ async def start_game(app: "Application", update: Update):
 
     await app.store.bot.send_message(
         update.message.chat.id,
-        f"Новый конкурс создан! Регистрация открыта на 30 секунд.",
+        "📸 Новый фотоконкурс создан!\n\n"
+        "Регистрация участников открыта на <b>30 секунд!</b> 🚀",
+        parse_mode="HTML",
         reply_parameters=ReplyParameters(message_id=update.message.message_id),
     )
 
+    moscow_tz = pytz.timezone("Europe/Moscow")
+    deadline_moscow = contest.registration_deadline.astimezone(moscow_tz)
+    formatted_deadline = deadline_moscow.strftime("%H:%M:%S")
+
     await app.store.bot.send_message(
         update.message.chat.id,
-        f"<b>Мы начинаем регистрацию участников на игру!</b>\n\nУчаствуешь?"
-        f"Пройти регистрацию необходимо до {contest.registration_deadline}",
+        "<b>🧩 Начинаем регистрацию!</b>\n\n"
+        "Хочешь участвовать в фототурнире? Нажми кнопку ниже 👇\n\n"
+        f"🕒 Регистрация закрывается в <b>{formatted_deadline}</b>.",
+        parse_mode="HTML",
         reply_markup=InlineKeyboard(
             inline_keyboard=[
                 [
                     InlineKeyboardButton(
-                        text="Участвую 👍", callback_data="apply"
+                        text="✅ Участвую", callback_data=f"apply_{contest.contest_id}"
                     ),
                     InlineKeyboardButton(
-                        text="Без меня 👎", callback_data="dismiss"
+                        text="❌ Пропущу", callback_data=f"dismiss_{contest.contest_id}"
                     ),
                 ]
             ]
@@ -99,40 +111,62 @@ async def start_game(app: "Application", update: Update):
         moscow_tz = pytz.timezone("Europe/Moscow")
         now_moscow = datetime.now(moscow_tz)
 
-        delay = (contest.registration_deadline - now_moscow).total_seconds() + 3
+        delay = (contest.registration_deadline - now_moscow).total_seconds()
         await asyncio.sleep(max(0, delay))
 
         try:
             await app.store.services.start_contest(contest.contest_id)
+        
             await app.store.bot.send_message(
-                chat.chat_id, "Регистрация завершена! Турнир начинается."
+                chat.chat_id,
+                "🎯 Регистрация завершена!\n\n"
+                "Турнир начинается прямо сейчас — готовьтесь выбирать лучшие аватарки! 🔥"
             )
 
-            next_match = await app.store.services.get_next_match(
+            next_match_id = await app.store.services.get_next_match(
                 contest.contest_id
             )
-            if next_match:
-                await send_match_for_voting(app, chat.chat_id, next_match)
+
+            if next_match_id:
+                await send_match_for_voting(app, chat.chat_id, next_match_id)
         except ValueError as e:
             await app.store.bot.send_message(chat.chat_id, f"⚠️ {str(e)}")
 
     app.loop.create_task(wait_and_start_game())
 
 
-@router.command("stop_game")
-async def stop_game(app: "Application", update: Update):
+@router.command("cancel_game")
+async def cancel_game(app: "Application", update: Update):
+    active_contest = await app.store.db.get_active_contest_by_chat_id(update.message.chat.id)
+    if not active_contest:
+        await app.store.bot.send_message(
+            update.message.chat.id,
+            "⚠️ В этом чате нет активного конкурса.",
+            reply_markup=ReplyParameters(
+                message_id=update.message.message_id
+            )
+        )
+        return
+
+    if update.message.from_user.id != active_contest.creator_id:
+        await app.store.bot.send_message(
+            update.message.chat.id,
+            "🚫 Только создатель конкурса может отменить игру.",
+            reply_markup=ReplyParameters(
+                message_id=update.message.message_id
+            )
+        )
+        return
+
     await app.store.bot.send_message(
         update.message.chat.id,
-        f"<b>Вы хотите приостановить игру?</b>",
+        "🛑<b>Вы действительно хотите приостановить фотоконкурс?</b>\n\n"
+        "Если остановите игру, турнир будет завершён досрочно.",
         reply_markup=InlineKeyboard(
             inline_keyboard=[
                 [
-                    InlineKeyboardButton(
-                        text="Да ❌", callback_data="stop_game"
-                    ),
-                    InlineKeyboardButton(
-                        text="Нет ☑️", callback_data="continue_game"
-                    ),
+                    InlineKeyboardButton(text="❌ Да", callback_data="cancel_game"),
+                    InlineKeyboardButton(text="☑️ Нет", callback_data="continue_game"),
                 ]
             ]
         ),
@@ -140,8 +174,10 @@ async def stop_game(app: "Application", update: Update):
 
 
 async def send_match_for_voting(
-    app: "Application", chat_id: int, match: MatchModel
+    app: "Application", chat_id: int, match_id: int
 ):
+    match = await app.store.db.get_match_by_id(match_id)
+    
     user1 = match.user1
     user2 = match.user2
 
@@ -197,14 +233,14 @@ async def send_match_for_voting(
     await app.store.bot.edit_message_text(
         chat_id=chat_id,
         message_id=voting_message_id,
-        text=f"🏁 Победил {winner.first_name}!\n\nГолоса: {user1.first_name} - {votes1} ❤️ | {user2.first_name} - {votes2} 💙",
+        text=f"🏁 Победил {winner.first_name}!\n\nГолоса: \n• {user1.first_name} - {votes1} ❤️ \n• {user2.first_name} - {votes2} 💙",
     )
 
     # создаём следующий матч
-    next_match = await app.store.services.get_next_match(
+    next_match_id = await app.store.services.get_next_match(
         updated_match.round.contest_id
     )
-    if next_match:
-        await send_match_for_voting(app, chat_id, next_match)
+    if next_match_id:
+        await send_match_for_voting(app, chat_id, next_match_id)
     else:
         await app.store.bot.send_message(chat_id, "🎉 Турнир завершен!")

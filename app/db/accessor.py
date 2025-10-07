@@ -2,7 +2,7 @@ import typing
 import pytz
 from datetime import datetime, timedelta
 
-from sqlalchemy import select, update, desc
+from sqlalchemy import select, update, delete, desc
 from sqlalchemy.orm import selectinload
 from loguru import logger
 
@@ -53,6 +53,15 @@ class DatabaseAccessor:
             await session.refresh(contest)
         return contest
 
+    async def is_user_in_contest(self, user_id: int, contest_id: int) -> bool:
+        async with self.app.database.sessionmaker() as session:
+            query = select(ContestsParticipantsModel).where(
+                (ContestsParticipantsModel.user_id == user_id)
+                & (ContestsParticipantsModel.contest_id == contest_id)
+            )
+            result = await session.execute(query)
+            return result.scalar_one_or_none() is not None
+
     async def add_user_to_contest(self, user_id: int, contest_id: int) -> bool:
         async with self.app.database.sessionmaker() as session:
             moscow_tz = pytz.timezone("Europe/Moscow")
@@ -79,6 +88,21 @@ class DatabaseAccessor:
             session.add(contests_participant)
             await session.commit()
             return True
+        
+    async def remove_user_from_contest(self, user_id: int, contest_id: int) -> bool:
+        async with self.app.database.sessionmaker() as session:
+            stmt = (
+                delete(ContestsParticipantsModel)
+                .where(
+                    (ContestsParticipantsModel.contest_id == contest_id)
+                    & (ContestsParticipantsModel.user_id == user_id)
+                )
+                .returning(ContestsParticipantsModel.user_id)
+            )
+            result = await session.execute(stmt)
+            await session.commit()
+
+            return result.scalar_one_or_none() is not None
 
     async def get_active_contest_by_chat_id(
         self, chat_id: int
@@ -114,7 +138,7 @@ class DatabaseAccessor:
 
             return latest_contest
 
-    async def get_contest_by_id(self, contest_id: int) -> ContestModel:
+    async def get_contest_by_id(self, contest_id: int) -> ContestModel | None:
         async with self.app.database.sessionmaker() as session:
             query = (
                 select(ContestModel)
@@ -133,6 +157,16 @@ class DatabaseAccessor:
             )
             await session.execute(stmt)
             await session.commit()
+
+    async def get_user_by_id(
+        self,
+        user_id: int,
+    ) -> UserModel | None:
+        async with self.app.database.sessionmaker() as session:
+            query = select(UserModel).where(UserModel.user_id == user_id)
+            result = await session.execute(query)
+            user = result.scalar_one_or_none()
+            return user
 
     async def get_or_create_user(
         self,
@@ -227,7 +261,21 @@ class DatabaseAccessor:
 
     async def get_match_by_id(self, match_id: int) -> MatchModel:
         async with self.app.database.sessionmaker() as session:
-            query = select(MatchModel).where(MatchModel.match_id == match_id)
+            query = (
+                select(MatchModel)
+                .where(MatchModel.match_id == match_id)
+                .options(
+                    selectinload(MatchModel.user1),
+                    selectinload(MatchModel.user2),
+                    selectinload(MatchModel.winner),
+                    selectinload(MatchModel.round).selectinload(
+                        RoundModel.contest
+                    ).selectinload(
+                        ContestModel.chat
+                    ),
+                    selectinload(MatchModel.votes)
+                )
+            )
             result = await session.execute(query)
             return result.scalar_one_or_none()
 
@@ -303,12 +351,6 @@ class DatabaseAccessor:
                 select(MatchModel)
                 .join(MatchModel.round)
                 .join(RoundModel.contest)
-                .options(
-                    selectinload(MatchModel.user1),
-                    selectinload(MatchModel.user2),
-                    selectinload(MatchModel.round).selectinload(RoundModel.contest),
-                    # selectinload(MatchModel.votes)
-                )
                 .where(
                     ContestModel.contest_id == contest_id,
                     RoundModel.round_number == ContestModel.current_round,
