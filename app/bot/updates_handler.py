@@ -32,12 +32,16 @@ class UpdatesHandler(BaseService):
 
     def _process_update(self, update: Update):
         if update.message:
-            update_task = asyncio.create_task(handlers_router.handle(self.app, update))
+            update_task = asyncio.create_task(
+                handlers_router.handle(self.app, update)
+            )
             self.update_tasks.add(update_task)
             update_task.add_done_callback(self._done_callback)
 
         if update.callback_query:
-            update_task = asyncio.create_task(callbacks_router.handle(self.app, update))
+            update_task = asyncio.create_task(
+                callbacks_router.handle(self.app, update)
+            )
             self.update_tasks.add(update_task)
             update_task.add_done_callback(self._done_callback)
 

@@ -11,19 +11,25 @@ if typing.TYPE_CHECKING:
 
 class Router:
     def __init__(self):
-        self._handlers: dict[str, Callable[["Application", Update], Awaitable[Any]]] = {}
-        self._callbacks: dict[str, Callable[["Application", Update], Awaitable[Any]]] = {}
+        self._handlers: dict[
+            str, Callable[["Application", Update], Awaitable[Any]]
+        ] = {}
+        self._callbacks: dict[
+            str, Callable[["Application", Update], Awaitable[Any]]
+        ] = {}
 
     def command(self, name: str):
         def wrapper(func):
             self._handlers[f"/{name}"] = func
             return func
+
         return wrapper
-    
+
     def callback(self, name: str):
         def wrapper(func):
             self._callbacks[name] = func
             return func
+
         return wrapper
 
     async def handle(self, app: "Application", update: Update):
@@ -42,4 +48,3 @@ class Router:
                 await handler(app, update)
             else:
                 logger.warning(f"Not found callback data: {data}")
-
