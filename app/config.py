@@ -41,7 +41,7 @@ def load_config(config_path: str) -> Config:
             user=raw_config["database"]["user"],
             password=raw_config["database"]["password"],
             database=raw_config["database"]["database"],
-            echo=raw_config["database"].get("echo", False)
+            echo=raw_config["database"].get("echo", False),
         ),
         bot=BotConfig(
             token=raw_config["bot"]["token"],
