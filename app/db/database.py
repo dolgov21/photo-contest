@@ -22,7 +22,7 @@ class Base(DeclarativeBase):
 class TimestampMixin:
     @declared_attr
     def recorded_at(self):
-        return Column(DateTime, default=func.now())
+        return Column(DateTime(timezone=True), default=func.now())
 
 
 class Database:
@@ -45,7 +45,7 @@ class Database:
     async def connect(self, *args: Any, **kwargs: Any):
         self.engine = create_async_engine(
             url=self.get_db_url(self.app.config.database),
-            echo=self.app.config.database.echo
+            echo=self.app.config.database.echo,
         )
 
         self.sessionmaker = async_sessionmaker(
