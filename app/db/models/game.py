@@ -12,6 +12,7 @@ __all__ = (
     "ChatModel",
     "UserModel",
     "ContestsParticipantsModel",
+    "VoteModel",
 )
 
 
@@ -148,3 +149,19 @@ class MatchModel(Base, TimestampMixin):
     winner: Mapped["UserModel"] = relationship(
         "UserModel", foreign_keys=[winner_id]
     )
+    votes: Mapped[list["VoteModel"]] = relationship(
+        "VoteModel", back_populates="match", cascade="all, delete"
+    )
+
+
+class VoteModel(Base, TimestampMixin):
+    __tablename__ = "votes"
+
+    vote_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    match_id: Mapped[int] = mapped_column(
+        ForeignKey("matches.match_id", ondelete="CASCADE"), nullable=False
+    )
+    voter_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    voted_for_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+
+    match: Mapped["MatchModel"] = relationship("MatchModel", back_populates="votes")

@@ -241,6 +241,52 @@ class DatabaseAccessor:
             await session.execute(stmt)
             await session.commit()
 
+    async def already_voted(self, match_id: int, voter_id: int) -> int | None:
+        """
+        Проверяет, голосовал ли пользователь в данном матче.
+        Возвращает voted_for_id, если голос есть, иначе None.
+        """
+        async with self.app.database.sessionmaker() as session:
+            query = select(VoteModel).where(
+                (VoteModel.match_id == match_id) &
+                (VoteModel.voter_id == voter_id)
+            )
+            result = await session.execute(query)
+            vote = result.scalar_one_or_none()
+            return vote.voted_for_id if vote else None
+
+    async def add_vote(self, match_id: int, voter_id: int, voted_for_id: int):
+        async with self.app.database.sessionmaker() as session:
+            # Проверяем, существует ли матч
+            query = select(MatchModel).where(MatchModel.match_id == match_id)
+            result = await session.execute(query)
+            match = result.scalar_one_or_none()
+
+            if not match:
+                raise ValueError(f"Match with id {match_id} not found")
+
+            # Создаём запись о голосе
+            vote = VoteModel(
+                match_id=match_id,
+                voter_id=voter_id,
+                voted_for_id=voted_for_id,
+            )
+            session.add(vote)
+
+            # Обновляем счёт
+            if voted_for_id == match.user1_id:
+                match.votes_user1 += 1
+            elif voted_for_id == match.user2_id:
+                match.votes_user2 += 1
+            else:
+                raise ValueError("Invalid voted_for_id")
+
+            session.add(match)
+            await session.commit()
+            await session.refresh(match)
+
+            return match
+
     async def finish_match(self, match_id: int, winner_id: int) -> None:
         async with self.app.database.sessionmaker() as session:
             stmt = (
@@ -260,7 +306,8 @@ class DatabaseAccessor:
                 .options(
                     selectinload(MatchModel.user1),
                     selectinload(MatchModel.user2),
-                    selectinload(MatchModel.round).selectinload(RoundModel.contest)
+                    selectinload(MatchModel.round).selectinload(RoundModel.contest),
+                    # selectinload(MatchModel.votes)
                 )
                 .where(
                     ContestModel.contest_id == contest_id,
