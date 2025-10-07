@@ -37,8 +37,7 @@ class InlineKeyboard(BaseModel):
     inline_keyboard: list[list[InlineKeyboardButton]]
 
 
-class ReplyKeyboard(BaseModel):
-    ...
+class ReplyKeyboard(BaseModel): ...
 
 
 class PhotoSize(BaseModel):
@@ -49,14 +48,43 @@ class PhotoSize(BaseModel):
     file_size: int | None = None
 
 
+class UserProfilePhotos(BaseModel):
+    total_count: int
+    photos: list[list[PhotoSize]]
+
+
+class ReplyParameters(BaseModel):
+    message_id: int
+
+
 class Message(BaseModel):
     message_id: int
     from_user: User = Field(alias="from")
     chat: Chat
-    text: str | None
+    text: str | None = None
     date_time: datetime = Field(alias="date")
     reply_markup: ReplyKeyboard | InlineKeyboard | None = None
+    reply_parametrs: ReplyParameters | None = None
     photo: list[PhotoSize] | None = None
+    caption: str | None = None
+    media_group_id: str | None = None
+
+
+class InputMediaPhoto(BaseModel):
+    media: str
+    type: str = "photo"
+    caption: str | None = None
+
+
+class SendMediaGroupResponse(BaseModel):
+    ok: bool
+    result: list[Message]
+
+    @classmethod
+    def model_validate(cls, obj: dict) -> "SendMediaGroupResponse":
+        if isinstance(obj, list):
+            return cls(ok=True, result=obj)
+        return super().model_validate(obj)
 
 
 class CallbackQuery(BaseModel):
