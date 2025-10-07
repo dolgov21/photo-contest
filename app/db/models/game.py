@@ -72,7 +72,7 @@ class ContestModel(Base, TimestampMixin):
     current_round: Mapped[int] = mapped_column(default=1, nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
     registration_deadline: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
+        DateTime(timezone=True), nullable=False
     )
     creator_id: Mapped[int] = mapped_column(
         BigInteger,
