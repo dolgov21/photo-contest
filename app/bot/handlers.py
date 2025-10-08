@@ -1,18 +1,17 @@
-import pytz
-import typing
 import asyncio
+import typing
 from datetime import datetime
 
-from loguru import logger
+import pytz
 
 from app.bot.router import Router
-from app.db.models import MatchModel
+from app.db.models.game import MatchModel
 from app.poller.schemas import (
     InlineKeyboard,
     InlineKeyboardButton,
-    Update,
-    ReplyParameters,
     InputMediaPhoto,
+    ReplyParameters,
+    Update,
 )
 
 if typing.TYPE_CHECKING:
@@ -34,7 +33,6 @@ async def start(app: "Application", update: Update):
 
 @router.command("start_game")
 async def start_game(app: "Application", update: Update):
-    formatted_deadline = "XX:xx:XX"
     chat = await app.store.db.get_or_create_chat(
         chat_id=update.message.chat.id,
         title=update.message.chat.title,
@@ -51,13 +49,12 @@ async def start_game(app: "Application", update: Update):
         chat.chat_id
     )
 
+    moscow_tz = pytz.timezone("Europe/Moscow")
+    now_moscow = datetime.now(moscow_tz)
+
     if active_contest:
-        moscow_tz = pytz.timezone("Europe/Moscow")
-        now_moscow = datetime.now(moscow_tz)
-
-        # deadline_moscow = active_contest.registration_deadline.astimezone(moscow_tz)
-        # formatted_deadline = deadline_moscow.strftime("%H:%M:%S")
-
+        deadline_moscow = active_contest.registration_deadline.astimezone(moscow_tz)
+        formatted_deadline = deadline_moscow.strftime("%H:%M:%S")
 
         if active_contest.registration_deadline > now_moscow:
             await app.store.bot.send_message(
@@ -82,11 +79,14 @@ async def start_game(app: "Application", update: Update):
 
     await app.store.bot.send_message(
         update.message.chat.id,
-        "📸 Новый фотоконкурс создан!\n\n"
-        "Регистрация участников открыта на <b>30 секунд!</b> 🚀",
+        f"📸 Новый фотоконкурс создан!\n\n"
+        f"Регистрация участников открыта на <b>{app.config.game.registration_time} секунд!</b> 🚀",
         parse_mode="HTML",
         reply_parameters=ReplyParameters(message_id=update.message.message_id),
     )
+
+    deadline_moscow = contest.registration_deadline.astimezone(moscow_tz)
+    formatted_deadline = deadline_moscow.strftime("%H:%M:%S")
 
     await app.store.bot.send_message(
         update.message.chat.id,
@@ -98,10 +98,12 @@ async def start_game(app: "Application", update: Update):
             inline_keyboard=[
                 [
                     InlineKeyboardButton(
-                        text="✅ Участвую", callback_data=f"apply_{contest.contest_id}"
+                        text="✅ Участвую",
+                        callback_data=f"apply_{contest.contest_id}",
                     ),
                     InlineKeyboardButton(
-                        text="❌ Пропущу", callback_data=f"dismiss_{contest.contest_id}"
+                        text="❌ Пропущу",
+                        callback_data=f"dismiss_{contest.contest_id}",
                     ),
                 ]
             ]
@@ -117,11 +119,11 @@ async def start_game(app: "Application", update: Update):
 
         try:
             await app.store.services.start_contest(contest.contest_id)
-        
+
             await app.store.bot.send_message(
                 chat.chat_id,
                 "🎯 Регистрация завершена!\n\n"
-                "Турнир начинается прямо сейчас — готовьтесь выбирать лучшие аватарки! 🔥"
+                "Турнир начинается прямо сейчас — готовьтесь выбирать лучшие аватарки! 🔥",
             )
 
             next_match_id = await app.store.services.get_next_match(
@@ -138,14 +140,14 @@ async def start_game(app: "Application", update: Update):
 
 @router.command("cancel_game")
 async def cancel_game(app: "Application", update: Update):
-    active_contest = await app.store.db.get_active_contest_by_chat_id(update.message.chat.id)
+    active_contest = await app.store.db.get_active_contest_by_chat_id(
+        update.message.chat.id
+    )
     if not active_contest:
         await app.store.bot.send_message(
             update.message.chat.id,
             "⚠️ В этом чате нет активного конкурса.",
-            reply_markup=ReplyParameters(
-                message_id=update.message.message_id
-            )
+            reply_markup=ReplyParameters(message_id=update.message.message_id),
         )
         return
 
@@ -153,9 +155,7 @@ async def cancel_game(app: "Application", update: Update):
         await app.store.bot.send_message(
             update.message.chat.id,
             "🚫 Только создатель конкурса может отменить игру.",
-            reply_markup=ReplyParameters(
-                message_id=update.message.message_id
-            )
+            reply_markup=ReplyParameters(message_id=update.message.message_id),
         )
         return
 
@@ -166,8 +166,12 @@ async def cancel_game(app: "Application", update: Update):
         reply_markup=InlineKeyboard(
             inline_keyboard=[
                 [
-                    InlineKeyboardButton(text="❌ Да", callback_data="cancel_game"),
-                    InlineKeyboardButton(text="☑️ Нет", callback_data="continue_game"),
+                    InlineKeyboardButton(
+                        text="❌ Да", callback_data="cancel_game"
+                    ),
+                    InlineKeyboardButton(
+                        text="☑️ Нет", callback_data="continue_game"
+                    ),
                 ]
             ]
         ),
@@ -178,7 +182,7 @@ async def send_match_for_voting(
     app: "Application", chat_id: int, match_id: int
 ):
     match = await app.store.db.get_match_by_id(match_id)
-    
+
     user1 = match.user1
     user2 = match.user2
 
@@ -209,11 +213,11 @@ async def send_match_for_voting(
         chat_id=chat_id,
         media=media_list,
         question_text="Голосуем! Чья фотка лучше?",
-        reply_markup=keyboard
+        reply_markup=keyboard,
     )
     voting_message_id = voting_message.message_id
 
-    # время для голосования 
+    # время для голосования
     await asyncio.sleep(app.config.game.voting_time)
 
     # Подсчет голосов из БД
@@ -237,7 +241,6 @@ async def send_match_for_voting(
         text=f"🏁 Победил {winner.first_name}!\n\nГолоса: \n• {user1.first_name} - {votes1} ❤️ \n• {user2.first_name} - {votes2} 💙",
     )
 
-    # создаём следующий матч
     next_match_id = await app.store.services.get_next_match(
         updated_match.round.contest_id
     )

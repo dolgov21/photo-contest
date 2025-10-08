@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 import pytz
 from loguru import logger
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.db.models.game import (
@@ -42,7 +42,7 @@ class TournamentService:
             if i + 1 < len(participants):
                 bracket.append((participants[i], participants[i + 1]))
         logger.debug(
-            f"bracket: {[(getattr(b[0], "first_name"), getattr(b[1], "first_name")) for b in bracket]}"
+            f"bracket: {[(b[0].first_name if b[0] else 'BYE', b[1].first_name if b[1] else 'BYE') for b in bracket]}"
         )
         return bracket
 

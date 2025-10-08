@@ -43,7 +43,8 @@ class BotAccessor(BaseAccessor):
         await self.session.close()
         logger.info("BotAccessor stopped.")
 
-    def api_request(self, expected_model: Type[T] = None):
+    @staticmethod
+    def api_request(expected_model: Type[T] = None):
         def wrapper(func):
             @functools.wraps(func)
             async def inner(self, *args, **kwargs):
