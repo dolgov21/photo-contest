@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 from aiohttp.web import (
     Application as AiohttpApplication,
@@ -52,7 +53,27 @@ class View(AiohttpView):
 app = Application()
 
 
+def setup_logging():
+    # Перенаправляем logging в loguru
+    class InterceptHandler(logging.Handler):
+        def emit(self, record):
+            try:
+                level = logger.level(record.levelname).name
+            except ValueError:
+                level = record.levelno
+            logger.opt(depth=6, exception=record.exc_info).log(level, record.getMessage())
+
+    logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+
+    logging.getLogger("aiohttp.access").setLevel(logging.INFO)
+    logging.getLogger("aiohttp.server").setLevel(logging.INFO)
+    logging.getLogger("aiohttp.web").setLevel(logging.INFO)
+    logging.getLogger("aiohttp.internal").setLevel(logging.WARNING)
+
+
 def setup_app(config_path: str) -> Application:
+    setup_logging()
+    
     setup_config(app, config_path)
     setup_database(app)
     setup_store(app)
