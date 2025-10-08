@@ -39,11 +39,9 @@ class TournamentService:
             )  # Автоматический проход
 
         bracket = [
-            (
-                participants[i], participants[i + 1])
-                for i in range(0, len(participants), 2)
-                if i + 1 < len(participants
-            )
+            (participants[i], participants[i + 1])
+            for i in range(0, len(participants), 2)
+            if i + 1 < len(participants)
         ]
         logger.debug(
             f"bracket: {
@@ -103,7 +101,7 @@ class TournamentService:
 
         if current_round and self._is_round_finished(current_round):
             winners = [
-                match.winner_id 
+                match.winner_id
                 for match in current_round.matches
                 if match.winner_id
             ]
@@ -158,8 +156,8 @@ class TournamentService:
                     return False
 
                 winners = [
-                    match.winner_id 
-                    for match in current_round.matches 
+                    match.winner_id
+                    for match in current_round.matches
                     if match.winner_id and match.user1_id != match.user2_id
                 ]
                 # Если остался только один победитель - турнир завершен

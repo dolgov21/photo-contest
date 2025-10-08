@@ -120,8 +120,7 @@ class DatabaseAccessor:
             query = (
                 select(ContestModel)
                 .where(
-                    (ContestModel.chat_id == chat_id)
-                    & (ContestModel.is_active)
+                    (ContestModel.chat_id == chat_id) & (ContestModel.is_active)
                 )
                 .order_by(desc(ContestModel.recorded_at))
                 .options(selectinload(ContestModel.rounds))
