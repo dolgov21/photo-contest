@@ -1,11 +1,19 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 from dotenv import load_dotenv
 from pyaml_env import parse_config
 
 if TYPE_CHECKING:
     from app.web.app import Application
+
+
+@dataclass
+class WebConfig:
+    host: str = "127.0.0.1"
+    port: int = 8000
+    print: Callable | None = print
 
 
 @dataclass
@@ -32,6 +40,7 @@ class DatabaseConfig:
 
 @dataclass
 class Config:
+    web: WebConfig
     database: DatabaseConfig
     bot: BotConfig
     game: GameConfig
@@ -42,6 +51,11 @@ def load_config(config_path: str) -> Config:
     raw_config = parse_config(config_path)
 
     return Config(
+        web=WebConfig(
+            host=raw_config["web"]["host"],
+            port=raw_config["web"]["port"],
+            print=print if raw_config["web"]["print"] else None
+        ),
         database=DatabaseConfig(
             host=raw_config["database"]["host"],
             port=raw_config["database"]["port"],
