@@ -5,7 +5,7 @@ from datetime import datetime
 import pytz
 
 from app.bot.router import Router
-from app.poller.schemas import Update, UserProfilePhotos
+from app.poller.schemes import Update, UserProfilePhotos
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application

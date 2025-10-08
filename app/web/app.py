@@ -14,6 +14,7 @@ from app.config import Config, setup_config
 from app.db.database import Database, setup_database
 from app.poller.poller import UpdatesPoller, setup_poller
 from app.store.store import Store, setup_store
+from app.web.routes import setup_routes
 
 
 class Application(AiohttpApplication):
@@ -57,6 +58,7 @@ def setup_app(config_path: str) -> Application:
     setup_store(app)
     setup_poller(app)
     setup_handler(app)
+    setup_routes(app)
 
     logger.info("Setup services")
     return app

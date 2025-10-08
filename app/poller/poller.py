@@ -9,7 +9,7 @@ from loguru import logger
 from pydantic import ValidationError
 
 from app.base.base_service import BaseService
-from app.poller.schemas import Update
+from app.poller.schemes import Update
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application

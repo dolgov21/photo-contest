@@ -4,7 +4,7 @@ from typing import Any
 
 from loguru import logger
 
-from app.poller.schemas import Update
+from app.poller.schemes import Update
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application

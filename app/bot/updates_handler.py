@@ -7,7 +7,7 @@ from loguru import logger
 from app.base.base_service import BaseService
 from app.bot.callbacks import router as callbacks_router
 from app.bot.handlers import router as handlers_router
-from app.poller.schemas import Update
+from app.poller.schemes import Update
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application

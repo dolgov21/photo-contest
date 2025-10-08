@@ -5,7 +5,7 @@ from datetime import datetime
 import pytz
 
 from app.bot.router import Router
-from app.poller.schemas import (
+from app.poller.schemes import (
     InlineKeyboard,
     InlineKeyboardButton,
     InputMediaPhoto,
