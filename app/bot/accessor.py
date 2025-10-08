@@ -1,7 +1,7 @@
 import functools
 import json
 import typing
-from typing import Type, TypeVar
+from typing import TypeVar
 
 from aiohttp import ClientSession, ClientTimeout, TCPConnector
 from loguru import logger
@@ -44,7 +44,7 @@ class BotAccessor(BaseAccessor):
         logger.info("BotAccessor stopped.")
 
     @staticmethod
-    def api_request(expected_model: Type[T] = None):
+    def api_request(expected_model: None | type[T] = None):
         def wrapper(func):
             @functools.wraps(func)
             async def inner(self, *args, **kwargs):
@@ -56,10 +56,11 @@ class BotAccessor(BaseAccessor):
                     try:
                         result_obj = expected_model.model_validate(result)
                         logger.debug(f"Validated response: {result_obj}")
-                        return result_obj
                     except ValidationError as e:
                         logger.opt(exception=e).error("Validation error")
                         return resp
+                    else:
+                        return result_obj
                 return resp
 
             return inner
@@ -225,8 +226,6 @@ class BotAccessor(BaseAccessor):
                 f"Question message sent with ID: {question_message.message_id}"
             )
 
-            return question_message
-
         except Exception as e:
             logger.opt(exception=e).error(
                 "Error in send_media_group_with_keyboard"
@@ -234,3 +233,5 @@ class BotAccessor(BaseAccessor):
             return await self.send_message(
                 chat_id=chat_id, text=question_text, reply_markup=reply_markup
             )
+        else:
+            return question_message

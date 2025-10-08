@@ -2,7 +2,7 @@ import typing
 from datetime import datetime, timedelta
 
 import pytz
-from sqlalchemy import delete, desc, select, update
+from sqlalchemy import delete, desc, not_, select, update
 from sqlalchemy.orm import selectinload
 
 from app.db.models.game import (
@@ -121,7 +121,7 @@ class DatabaseAccessor:
                 select(ContestModel)
                 .where(
                     (ContestModel.chat_id == chat_id)
-                    & (ContestModel.is_active == True)
+                    & (ContestModel.is_active)
                 )
                 .order_by(desc(ContestModel.recorded_at))
                 .options(selectinload(ContestModel.rounds))
@@ -151,7 +151,7 @@ class DatabaseAccessor:
         async with self.app.database.sessionmaker() as session:
             query = (
                 select(ContestModel)
-                .where((ContestModel.contest_id == contest_id))
+                .where(ContestModel.contest_id == contest_id)
                 .options(selectinload(ContestModel.rounds))
             )
             result = await session.execute(query)
@@ -174,16 +174,15 @@ class DatabaseAccessor:
         async with self.app.database.sessionmaker() as session:
             query = select(UserModel).where(UserModel.user_id == user_id)
             result = await session.execute(query)
-            user = result.scalar_one_or_none()
-            return user
+            return result.scalar_one_or_none()
 
     async def get_or_create_user(
         self,
         user_id: int,
         first_name: str,
-        last_name: str = None,
-        username: str = None,
-        photo_id: str = None,
+        last_name: str | None = None,
+        username: str | None = None,
+        photo_id: str | None = None,
     ) -> UserModel:
         async with self.app.database.sessionmaker() as session:
             query = select(UserModel).where(UserModel.user_id == user_id)
@@ -297,8 +296,7 @@ class DatabaseAccessor:
             await session.commit()
 
     async def already_voted(self, match_id: int, voter_id: int) -> int | None:
-        """
-        Проверяет, голосовал ли пользователь в данном матче.
+        """Проверяет, голосовал ли пользователь в данном матче.
         Возвращает voted_for_id, если голос есть, иначе None.
         """
         async with self.app.database.sessionmaker() as session:
@@ -360,7 +358,7 @@ class DatabaseAccessor:
                     ContestModel.contest_id == contest_id,
                     RoundModel.round_number == ContestModel.current_round,
                     MatchModel.winner_id.is_(None),
-                    MatchModel.is_finished == False,
+                    not_(MatchModel.is_finished),  # Changed this line
                 )
                 .order_by(MatchModel.match_id)
             )

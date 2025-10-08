@@ -5,7 +5,6 @@ from datetime import datetime
 import pytz
 
 from app.bot.router import Router
-from app.db.models.game import MatchModel
 from app.poller.schemas import (
     InlineKeyboard,
     InlineKeyboardButton,
@@ -25,7 +24,8 @@ async def start(app: "Application", update: Update):
     await app.store.bot.send_message(
         update.message.chat.id,
         "👋 Привет! Добро пожаловать в <b>Фотоконкурс</b>! 📸\n\n"
-        "Бот устроит турнир на выбывание среди участников чата — кто победит, решит голосование! 🏆\n\n"
+        "Бот устроит турнир на выбывание среди участников чата — "
+        "кто победит, решит голосование! 🏆\n\n"
         "Отправь <code>/start_game</code>, чтобы начать первый раунд.",
         parse_mode="HTML",
     )
@@ -53,7 +53,9 @@ async def start_game(app: "Application", update: Update):
     now_moscow = datetime.now(moscow_tz)
 
     if active_contest:
-        deadline_moscow = active_contest.registration_deadline.astimezone(moscow_tz)
+        deadline_moscow = active_contest.registration_deadline.astimezone(
+            moscow_tz
+        )
         formatted_deadline = deadline_moscow.strftime("%H:%M:%S")
 
         if active_contest.registration_deadline > now_moscow:
@@ -67,7 +69,6 @@ async def start_game(app: "Application", update: Update):
                     message_id=update.message.message_id
                 ),
             )
-            return
         else:
             await app.store.db.deactivate_contest(active_contest.contest_id)
 
@@ -80,7 +81,8 @@ async def start_game(app: "Application", update: Update):
     await app.store.bot.send_message(
         update.message.chat.id,
         f"📸 Новый фотоконкурс создан!\n\n"
-        f"Регистрация участников открыта на <b>{app.config.game.registration_time} секунд!</b> 🚀",
+        f"Регистрация участников открыта на <b>"
+        f"{app.config.game.registration_time} секунд!</b> 🚀",
         parse_mode="HTML",
         reply_parameters=ReplyParameters(message_id=update.message.message_id),
     )
@@ -123,7 +125,8 @@ async def start_game(app: "Application", update: Update):
             await app.store.bot.send_message(
                 chat.chat_id,
                 "🎯 Регистрация завершена!\n\n"
-                "Турнир начинается прямо сейчас — готовьтесь выбирать лучшие аватарки! 🔥",
+                "Турнир начинается прямо сейчас — "
+                "готовьтесь выбирать лучшие аватарки! 🔥",
             )
 
             next_match_id = await app.store.services.get_next_match(
@@ -133,7 +136,7 @@ async def start_game(app: "Application", update: Update):
             if next_match_id:
                 await send_match_for_voting(app, chat.chat_id, next_match_id)
         except ValueError as e:
-            await app.store.bot.send_message(chat.chat_id, f"⚠️ {str(e)}")
+            await app.store.bot.send_message(chat.chat_id, f"⚠️ {e!s}")
 
     app.loop.create_task(wait_and_start_game())
 
@@ -238,7 +241,9 @@ async def send_match_for_voting(
     await app.store.bot.edit_message_text(
         chat_id=chat_id,
         message_id=voting_message_id,
-        text=f"🏁 Победил {winner.first_name}!\n\nГолоса: \n• {user1.first_name} - {votes1} ❤️ \n• {user2.first_name} - {votes2} 💙",
+        text=f"🏁 Победил {winner.first_name}!\n\n"
+        f"Голоса: \n• {user1.first_name} - {votes1} "
+        f"❤️ \n• {user2.first_name} - {votes2} 💙",
     )
 
     next_match_id = await app.store.services.get_next_match(

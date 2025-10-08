@@ -1,6 +1,5 @@
 import random
 import typing
-from collections import deque
 from datetime import datetime, timedelta
 
 import pytz
@@ -27,7 +26,8 @@ class TournamentService:
         self, participants: list[UserModel]
     ) -> list[tuple[UserModel, UserModel]]:
         logger.debug(
-            f"participants: {[participant.first_name for participant in participants]}"
+            f"participants: "
+            f"{[participant.first_name for participant in participants]}"
         )
         random.shuffle(participants)
         bracket = []
@@ -38,11 +38,22 @@ class TournamentService:
                 (bye_participant, bye_participant)
             )  # Автоматический проход
 
-        for i in range(0, len(participants), 2):
-            if i + 1 < len(participants):
-                bracket.append((participants[i], participants[i + 1]))
+        bracket = [
+            (
+                participants[i], participants[i + 1])
+                for i in range(0, len(participants), 2)
+                if i + 1 < len(participants
+            )
+        ]
         logger.debug(
-            f"bracket: {[(b[0].first_name if b[0] else 'BYE', b[1].first_name if b[1] else 'BYE') for b in bracket]}"
+            f"bracket: {
+                [
+                    (
+                        b[0].first_name if b[0] else 'BYE',
+                        b[1].first_name if b[1] else 'BYE'
+                    ) for b in bracket
+                ]
+            }"
         )
         return bracket
 
@@ -91,25 +102,25 @@ class TournamentService:
         current_round = await self.app.store.db.get_current_round(contest_id)
 
         if current_round and self._is_round_finished(current_round):
-            winners = []
-            for match in current_round.matches:
-                if match.winner_id:
-                    winners.append(match.winner_id)
+            winners = [
+                match.winner_id 
+                for match in current_round.matches
+                if match.winner_id
+            ]
 
             if len(winners) == 1:
                 logger.info(
                     f"Tournament {contest_id} completed! Winner: {winners[0]}"
                 )
                 return None
-            elif len(winners) == 0:
+            if len(winners) == 0:
                 logger.warning(f"Tournament {contest_id} has no winners!")
                 return None
 
         return None
 
     async def _create_next_round_if_needed(self, contest_id: int) -> bool:
-        """
-        Создает следующий раунд если текущий завершен.
+        """Создает следующий раунд если текущий завершен.
         Возвращает True если раунд был создан, False если нет.
         """
         try:
@@ -146,15 +157,16 @@ class TournamentService:
                 if not self._is_round_finished(current_round):
                     return False
 
-                winners = []
-                for match in current_round.matches:
-                    if match.winner_id and match.user1_id != match.user2_id:
-                        winners.append(match.winner_id)
-
+                winners = [
+                    match.winner_id 
+                    for match in current_round.matches 
+                    if match.winner_id and match.user1_id != match.user2_id
+                ]
                 # Если остался только один победитель - турнир завершен
                 if len(winners) <= 1:
                     logger.info(
-                        f"Tournament {contest_id} finished with {len(winners)} winner(s)"
+                        f"Tournament {contest_id} finished with "
+                        f"{len(winners)} winner(s)"
                     )
                     return False
 
@@ -176,7 +188,15 @@ class TournamentService:
 
                 new_bracket = self.generate_bracket(winners_objects)
                 logger.info(
-                    f"Creating round {new_round_number} with {len(winners_objects)} winners: {[w.first_name for w in winners_objects]}"
+                    f"Creating round {new_round_number} with "
+                    f"{len(winners_objects)} winners: "
+                    f"{
+                        [
+                            w.first_name 
+                            for w in winners_objects
+                            if w is not None
+                        ]
+                    }"
                 )
 
                 for user1, user2 in new_bracket:
@@ -204,7 +224,8 @@ class TournamentService:
                 await session.commit()
 
                 logger.info(
-                    f"Created new round {new_round_number} for contest {contest_id}"
+                    f"Created new round {new_round_number} "
+                    f"for contest {contest_id}"
                 )
                 return True
 
