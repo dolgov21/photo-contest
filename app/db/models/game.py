@@ -1,17 +1,17 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, BigInteger, DateTime
+from sqlalchemy import BigInteger, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base, TimestampMixin
 
 __all__ = (
+    "ChatModel",
     "ContestModel",
+    "ContestsParticipantsModel",
     "MatchModel",
     "RoundModel",
-    "ChatModel",
     "UserModel",
-    "ContestsParticipantsModel",
     "VoteModel",
 )
 
@@ -164,4 +164,6 @@ class VoteModel(Base, TimestampMixin):
     voter_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     voted_for_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
-    match: Mapped["MatchModel"] = relationship("MatchModel", back_populates="votes")
+    match: Mapped["MatchModel"] = relationship(
+        "MatchModel", back_populates="votes"
+    )

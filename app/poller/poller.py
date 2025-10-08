@@ -5,8 +5,8 @@ from urllib.parse import urlencode, urljoin
 
 from aiohttp import TCPConnector
 from aiohttp.client import ClientSession, ClientTimeout
-from pydantic import ValidationError
 from loguru import logger
+from pydantic import ValidationError
 
 from app.base.base_service import BaseService
 from app.poller.schemas import Update

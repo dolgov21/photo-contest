@@ -1,6 +1,6 @@
+import functools
 import json
 import typing
-import functools
 from typing import Type, TypeVar
 
 from aiohttp import ClientSession, ClientTimeout, TCPConnector
@@ -10,14 +10,12 @@ from pydantic import ValidationError
 from app.base.base_accessor import BaseAccessor
 from app.poller.schemas import (
     InlineKeyboard,
-    ReplyKeyboard,
-    Update,
-    Message,
-    PhotoSize,
-    ReplyParameters,
-    UserProfilePhotos,
     InputMediaPhoto,
+    Message,
+    ReplyKeyboard,
+    ReplyParameters,
     SendMediaGroupResponse,
+    UserProfilePhotos,
 )
 
 if typing.TYPE_CHECKING:
@@ -45,7 +43,7 @@ class BotAccessor(BaseAccessor):
         await self.session.close()
         logger.info("BotAccessor stopped.")
 
-    def api_request(expected_model: Type[T] = None):
+    def api_request(self, expected_model: Type[T] = None):
         def wrapper(func):
             @functools.wraps(func)
             async def inner(self, *args, **kwargs):
@@ -62,7 +60,9 @@ class BotAccessor(BaseAccessor):
                         logger.opt(exception=e).error("Validation error")
                         return resp
                 return resp
+
             return inner
+
         return wrapper
 
     @api_request(expected_model=Message)
@@ -95,7 +95,6 @@ class BotAccessor(BaseAccessor):
             json=params,
         ) as response:
             return await response.json()
-
 
     @api_request(expected_model=Message)
     async def edit_message_text(
@@ -179,7 +178,7 @@ class BotAccessor(BaseAccessor):
             json=params,
         ) as response:
             return await response.json()
-        
+
     @api_request(expected_model=SendMediaGroupResponse)
     async def send_media_group(
         self,
@@ -208,29 +207,29 @@ class BotAccessor(BaseAccessor):
     ) -> Message:
         try:
             media_group_response = await self.send_media_group(chat_id, media)
-            
+
             if not media_group_response or not media_group_response.ok:
                 logger.error("Failed to send media group")
                 return await self.send_message(
                     chat_id=chat_id,
                     text=question_text,
-                    reply_markup=reply_markup
+                    reply_markup=reply_markup,
                 )
-            
+
             question_message = await self.send_message(
-                chat_id=chat_id,
-                text=question_text,
-                reply_markup=reply_markup
+                chat_id=chat_id, text=question_text, reply_markup=reply_markup
             )
-            
-            logger.info(f"Question message sent with ID: {question_message.message_id}")
-            
+
+            logger.info(
+                f"Question message sent with ID: {question_message.message_id}"
+            )
+
             return question_message
-            
+
         except Exception as e:
-            logger.opt(exception=e).error("Error in send_media_group_with_keyboard")
+            logger.opt(exception=e).error(
+                "Error in send_media_group_with_keyboard"
+            )
             return await self.send_message(
-                chat_id=chat_id,
-                text=question_text,
-                reply_markup=reply_markup
+                chat_id=chat_id, text=question_text, reply_markup=reply_markup
             )

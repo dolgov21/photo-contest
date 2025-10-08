@@ -1,14 +1,14 @@
-import typing
 import re
+import typing
+from datetime import datetime
 
 import pytz
-from datetime import datetime
 
 from app.bot.router import Router
 from app.poller.schemas import (
-    Update,
     InlineKeyboard,
     InlineKeyboardButton,
+    Update,
     UserProfilePhotos,
 )
 
@@ -65,7 +65,9 @@ async def apply(app: "Application", update: Update):
     )
     await app.store.db.update_user_photo(user_id=user.user_id, photo_id=file_id)
 
-    user_added = await app.store.db.add_user_to_contest(user.user_id, contest.contest_id)
+    user_added = await app.store.db.add_user_to_contest(
+        user.user_id, contest.contest_id
+    )
     if not user_added:
         await app.store.bot.answer_callback_query(
             update.callback_query.id,
@@ -74,12 +76,15 @@ async def apply(app: "Application", update: Update):
         )
         return
 
-    participants = await app.store.db.get_contest_participants(contest.contest_id)
+    participants = await app.store.db.get_contest_participants(
+        contest.contest_id
+    )
     participants_text = "\n".join(
         [f"• {p.first_name} {p.last_name or ''}".strip() for p in participants]
     )
 
     import re
+
     original_text = update.callback_query.message.text
     clean_text = re.split(r"\n+Участники:", original_text, maxsplit=1)[0]
 
@@ -121,7 +126,9 @@ async def dismiss(app: "Application", update: Update):
     user_id = update.callback_query.from_user.id
 
     # Проверяем, зарегистрирован ли пользователь
-    is_participant = await app.store.db.is_user_in_contest(user_id, contest.contest_id)
+    is_participant = await app.store.db.is_user_in_contest(
+        user_id, contest.contest_id
+    )
 
     if is_participant:
         await app.store.db.remove_user_from_contest(user_id, contest.contest_id)
@@ -136,7 +143,9 @@ async def dismiss(app: "Application", update: Update):
     )
 
     # Обновляем список участников
-    participants = await app.store.db.get_contest_participants(contest.contest_id)
+    participants = await app.store.db.get_contest_participants(
+        contest.contest_id
+    )
     participants_text = "\n".join(
         [f"• {p.first_name} {p.last_name or ''}".strip() for p in participants]
     )
@@ -171,7 +180,7 @@ async def cancel_game(app: "Application", update: Update):
             show_alert=True,
         )
         return
-    
+
     if update.callback_query.from_user.id != active_contest.creator_id:
         await app.store.bot.answer_callback_query(
             update.callback_query.id,
@@ -211,7 +220,7 @@ async def continue_game(app: "Application", update: Update):
             show_alert=True,
         )
         return
-    
+
     if update.callback_query.from_user.id != active_contest.creator_id:
         await app.store.bot.answer_callback_query(
             update.callback_query.id,
@@ -241,9 +250,11 @@ async def continue_game(app: "Application", update: Update):
 @router.callback_startswith("vote")
 async def vote(app: "Application", update: Update):
     match_id, voter_for_id = map(int, update.callback_query.data.split("_")[1:])
-    
+
     # Проверяем, голосовал ли уже
-    existing_vote = await app.store.db.already_voted(match_id, update.callback_query.from_user.id)
+    existing_vote = await app.store.db.already_voted(
+        match_id, update.callback_query.from_user.id
+    )
     if existing_vote is not None:
         voted_for_user = await app.store.db.get_user_by_id(existing_vote)
         await app.store.bot.answer_callback_query(
@@ -252,7 +263,7 @@ async def vote(app: "Application", update: Update):
             show_alert=False,
         )
         return
-    
+
     await app.store.db.add_vote(
         match_id=match_id,
         voter_id=update.callback_query.from_user.id,

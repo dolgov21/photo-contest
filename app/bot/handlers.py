@@ -34,6 +34,7 @@ async def start(app: "Application", update: Update):
 
 @router.command("start_game")
 async def start_game(app: "Application", update: Update):
+    formatted_deadline = "XX:xx:XX"
     chat = await app.store.db.get_or_create_chat(
         chat_id=update.message.chat.id,
         title=update.message.chat.title,
@@ -54,12 +55,16 @@ async def start_game(app: "Application", update: Update):
         moscow_tz = pytz.timezone("Europe/Moscow")
         now_moscow = datetime.now(moscow_tz)
 
+        # deadline_moscow = active_contest.registration_deadline.astimezone(moscow_tz)
+        # formatted_deadline = deadline_moscow.strftime("%H:%M:%S")
+
+
         if active_contest.registration_deadline > now_moscow:
             await app.store.bot.send_message(
                 update.message.chat.id,
                 f"⏳ Регистрация на текущий фотоконкурс ещё идёт!\n"
                 f"Пожалуйста, дождитесь её завершения — "
-                f"окончание регистрации: <b>{active_contest.registration_deadline.strftime('%H:%M:%S')}</b>.",
+                f"окончание регистрации: <b>{formatted_deadline}</b>.",
                 parse_mode="HTML",
                 reply_parameters=ReplyParameters(
                     message_id=update.message.message_id
@@ -72,7 +77,7 @@ async def start_game(app: "Application", update: Update):
     contest = await app.store.db.create_contest(
         chat_id=chat.chat_id,
         creator_id=user.user_id,
-        registration_duration=15,
+        registration_duration=app.config.game.registration_time,
     )
 
     await app.store.bot.send_message(
@@ -82,10 +87,6 @@ async def start_game(app: "Application", update: Update):
         parse_mode="HTML",
         reply_parameters=ReplyParameters(message_id=update.message.message_id),
     )
-
-    moscow_tz = pytz.timezone("Europe/Moscow")
-    deadline_moscow = contest.registration_deadline.astimezone(moscow_tz)
-    formatted_deadline = deadline_moscow.strftime("%H:%M:%S")
 
     await app.store.bot.send_message(
         update.message.chat.id,
@@ -213,7 +214,7 @@ async def send_match_for_voting(
     voting_message_id = voting_message.message_id
 
     # время для голосования 
-    await asyncio.sleep(10)
+    await asyncio.sleep(app.config.game.voting_time)
 
     # Подсчет голосов из БД
     updated_match = await app.store.db.get_match_by_id(match.match_id)

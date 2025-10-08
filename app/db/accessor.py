@@ -1,12 +1,19 @@
 import typing
-import pytz
 from datetime import datetime, timedelta
 
-from sqlalchemy import select, update, delete, desc
+import pytz
+from sqlalchemy import delete, desc, select, update
 from sqlalchemy.orm import selectinload
-from loguru import logger
 
-from app.db.models import *
+from app.db.models.game import (
+    ChatModel,
+    ContestModel,
+    ContestsParticipantsModel,
+    MatchModel,
+    RoundModel,
+    UserModel,
+    VoteModel,
+)
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -88,8 +95,10 @@ class DatabaseAccessor:
             session.add(contests_participant)
             await session.commit()
             return True
-        
-    async def remove_user_from_contest(self, user_id: int, contest_id: int) -> bool:
+
+    async def remove_user_from_contest(
+        self, user_id: int, contest_id: int
+    ) -> bool:
         async with self.app.database.sessionmaker() as session:
             stmt = (
                 delete(ContestsParticipantsModel)
@@ -268,12 +277,10 @@ class DatabaseAccessor:
                     selectinload(MatchModel.user1),
                     selectinload(MatchModel.user2),
                     selectinload(MatchModel.winner),
-                    selectinload(MatchModel.round).selectinload(
-                        RoundModel.contest
-                    ).selectinload(
-                        ContestModel.chat
-                    ),
-                    selectinload(MatchModel.votes)
+                    selectinload(MatchModel.round)
+                    .selectinload(RoundModel.contest)
+                    .selectinload(ContestModel.chat),
+                    selectinload(MatchModel.votes),
                 )
             )
             result = await session.execute(query)
@@ -296,8 +303,8 @@ class DatabaseAccessor:
         """
         async with self.app.database.sessionmaker() as session:
             query = select(VoteModel).where(
-                (VoteModel.match_id == match_id) &
-                (VoteModel.voter_id == voter_id)
+                (VoteModel.match_id == match_id)
+                & (VoteModel.voter_id == voter_id)
             )
             result = await session.execute(query)
             vote = result.scalar_one_or_none()
@@ -305,7 +312,6 @@ class DatabaseAccessor:
 
     async def add_vote(self, match_id: int, voter_id: int, voted_for_id: int):
         async with self.app.database.sessionmaker() as session:
-            # Проверяем, существует ли матч
             query = select(MatchModel).where(MatchModel.match_id == match_id)
             result = await session.execute(query)
             match = result.scalar_one_or_none()
@@ -313,7 +319,6 @@ class DatabaseAccessor:
             if not match:
                 raise ValueError(f"Match with id {match_id} not found")
 
-            # Создаём запись о голосе
             vote = VoteModel(
                 match_id=match_id,
                 voter_id=voter_id,
@@ -355,10 +360,24 @@ class DatabaseAccessor:
                     ContestModel.contest_id == contest_id,
                     RoundModel.round_number == ContestModel.current_round,
                     MatchModel.winner_id.is_(None),
-                    MatchModel.is_finished == False
+                    MatchModel.is_finished == False,
                 )
                 .order_by(MatchModel.match_id)
             )
-            
+            result = await session.execute(query)
+            return result.scalars().first()
+
+    async def get_current_round(self, contest_id: int) -> RoundModel | None:
+        async with self.app.database.sessionmaker() as session:
+            query = (
+                select(RoundModel)
+                .join(ContestModel)
+                .where(
+                    ContestModel.contest_id == contest_id,
+                    RoundModel.round_number == ContestModel.current_round,
+                )
+                .options(selectinload(RoundModel.matches))
+            )
+
             result = await session.execute(query)
             return result.scalar_one_or_none()

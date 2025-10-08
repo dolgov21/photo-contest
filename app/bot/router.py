@@ -1,5 +1,5 @@
 import typing
-from typing import Callable, Awaitable, Any
+from typing import Any, Awaitable, Callable
 
 from loguru import logger
 
@@ -34,11 +34,12 @@ class Router:
             return func
 
         return wrapper
-    
+
     def callback_startswith(self, name: str):
         def wrapper(func):
             self._callback_prefixes[name] = func
             return func
+
         return wrapper
 
     async def handle(self, app: "Application", update: Update):
@@ -52,13 +53,12 @@ class Router:
 
         if update.callback_query and update.callback_query.data:
             data = update.callback_query.data
- 
+
             handler = self._callbacks.get(data)
             if not handler:
-                handler = self._callback_prefixes.get(data.split("_")[0]) 
-            
+                handler = self._callback_prefixes.get(data.split("_")[0])
+
             if handler:
                 await handler(app, update)
             else:
                 logger.warning(f"Not found callback handler: {data}")
-            

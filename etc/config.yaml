@@ -19,4 +19,8 @@ bot:
   token: !ENV ${BOT_TOKEN}
   timeout: 25
 
+game:
+  voting_time: 10
+  registration_time: 15
+
 store: {}
