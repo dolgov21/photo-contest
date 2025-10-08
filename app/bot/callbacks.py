@@ -81,8 +81,10 @@ async def apply(app: "Application", update: Update):
     original_text = update.callback_query.message.text
     clean_text = re.split(r"\n+Участники:", original_text, maxsplit=1)[0]
 
-    text = f"{clean_text}\n\n<b>Участники:</b>\n"
-    f"{participants_text or '— пока никто не зарегистрировался —'}"
+    text = (
+        f"{clean_text}\n\n<b>Участники:</b>\n"
+        f"{participants_text or '— пока никто не зарегистрировался —'}"
+    )
 
     try:
         await app.store.bot.edit_message_text(
@@ -147,8 +149,10 @@ async def dismiss(app: "Application", update: Update):
     original_text = update.callback_query.message.text
     clean_text = re.split(r"\n+Участники:", original_text, maxsplit=1)[0]
 
-    text = f"{clean_text}\n\n<b>Участники:</b>\n"
-    f"{participants_text or '— пока никто не зарегистрировался —'}"
+    text = (
+        f"{clean_text}\n\n<b>Участники:</b>\n"
+        f"{participants_text or '— пока никто не зарегистрировался —'}"
+    )
 
     try:
         await app.store.bot.edit_message_text(
