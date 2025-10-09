@@ -31,6 +31,7 @@ class Database:
         self.engine: AsyncEngine | None = None
         self.sessionmaker: async_sessionmaker[AsyncSession] | None = None
 
+
     @staticmethod
     def get_db_url(config_db: "DatabaseConfig") -> str:
         return URL.create(
@@ -60,3 +61,4 @@ def setup_database(app: "Application"):
     app.database = Database(app)
     app.on_startup.append(app.database.connect)
     app.on_shutdown.append(app.database.disconnect)
+
