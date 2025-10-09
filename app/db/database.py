@@ -26,11 +26,11 @@ class TimestampMixin:
 
 
 class Database:
-    engine: AsyncEngine
-    sessionmaker: async_sessionmaker[AsyncSession]
+    def __init__(self, app: "Application"):
+        self.app = app
+        self.engine: AsyncEngine | None = None
+        self.sessionmaker: async_sessionmaker[AsyncSession] | None = None
 
-    def __init__(self, scraper: "Application"):
-        self.scraper = scraper
 
     @staticmethod
     def get_db_url(config_db: "DatabaseConfig") -> str:
@@ -45,7 +45,8 @@ class Database:
 
     async def connect(self, *args: Any, **kwargs: Any):
         self.engine = create_async_engine(
-            url=self.get_db_url(self.scraper.config.database), echo=True
+            url=self.get_db_url(self.app.config.database),
+            echo=self.app.config.database.echo,
         )
 
         self.sessionmaker = async_sessionmaker(
@@ -59,4 +60,5 @@ class Database:
 def setup_database(app: "Application"):
     app.database = Database(app)
     app.on_startup.append(app.database.connect)
-    app.on_cleanup.append(app.database.disconnect)
+    app.on_shutdown.append(app.database.disconnect)
+
