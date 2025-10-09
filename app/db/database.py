@@ -61,4 +61,3 @@ def setup_database(app: "Application"):
     app.database = Database(app)
     app.on_startup.append(app.database.connect)
     app.on_shutdown.append(app.database.disconnect)
-
