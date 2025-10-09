@@ -46,7 +46,7 @@ class Router:
     async def handle(self, app: "Application", update: Update):
         if update.message and update.message.text:
             command = update.message.text.strip().split()[0]
-            handler = self._handlers.get(command)
+            handler = self._handlers.get(command.split("@", 1)[0])
             if handler:
                 await handler(app, update)
             else:

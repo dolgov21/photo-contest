@@ -18,7 +18,8 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from app.db.models import *  # noqa
+from app.db.models.admin import *  # noqa
+from app.db.models.game import *  # noqa
 from app.db.database import Base, Database
 from app.config import load_config
 
