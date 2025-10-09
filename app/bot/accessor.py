@@ -8,7 +8,7 @@ from loguru import logger
 from pydantic import ValidationError
 
 from app.base.base_accessor import BaseAccessor
-from app.poller.schemas import (
+from app.poller.schemes import (
     InlineKeyboard,
     InputMediaPhoto,
     Message,
