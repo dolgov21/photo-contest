@@ -6,7 +6,7 @@ from app.web.app import View
 from app.web.utils import json_response, error_json_response
 from app.admin.schemes import AdminSchema
 from app.web.schemes import OkResponseSchema
-from app.web.middlewares import HTTP_ERROR_CODES
+from app.web.mw import HTTP_ERROR_CODES
 
 class AdminLoginView(View):
     @request_schema(AdminSchema)

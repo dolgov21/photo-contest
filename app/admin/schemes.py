@@ -1,7 +1,6 @@
-from pydantic import BaseModel, Field
+from marshmallow import Schema, fields
 
-
-class Admin(BaseModel):
-    id: int = Field(exclude=True, hidden_from_schema=True)
-    email: str
-    password: str
+class AdminSchema(Schema):
+    id = fields.Int(dump_only=True)
+    email = fields.Str(required=True)
+    password = fields.Str(required=True)
