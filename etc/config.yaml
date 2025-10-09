@@ -13,6 +13,7 @@ database:
   user: !ENV ${POSTGRES_USER}
   password: !ENV ${POSTGRES_PASSWORD}
   database: !ENV ${POSTGRES_DB}
+  echo: true
 
 bot:
   token: !ENV ${BOT_TOKEN}
