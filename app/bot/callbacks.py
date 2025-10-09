@@ -272,8 +272,7 @@ async def continue_game(app: "Application", update: Update):
         chat_id=chat_id,
         message_id=update.callback_query.message.message_id,
         text=(
-            "❌ <b>Конкурс был отменён.</b>\n\n"
-            "Все текущие матчи и регистрация участников прекращены."
+            "🏎 <b>Продолжаем...</b>\n\n"
         ),
     )
 
