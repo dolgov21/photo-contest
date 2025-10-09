@@ -9,6 +9,12 @@ if TYPE_CHECKING:
 
 
 @dataclass
+class GameConfig:
+    voting_time: 10 = 10
+    registration_time: 30 = 30
+
+
+@dataclass
 class BotConfig:
     token: str = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
     timeout: int = 25
@@ -28,6 +34,7 @@ class DatabaseConfig:
 class Config:
     database: DatabaseConfig
     bot: BotConfig
+    game: GameConfig
 
 
 def load_config(config_path: str) -> Config:
@@ -46,6 +53,10 @@ def load_config(config_path: str) -> Config:
         bot=BotConfig(
             token=raw_config["bot"]["token"],
             timeout=raw_config["bot"].get("timeout", 25),
+        ),
+        game=GameConfig(
+            voting_time=raw_config["game"].get("voting_time", 10),
+            registration_time=raw_config["game"].get("registration_time", 30),
         ),
     )
 
