@@ -55,13 +55,10 @@ async def error_handling_middleware(request: "Request", handler):
 async def auth_middleware(request, handler):
     if request.path == "/admin.login":
         return await handler(request)
-    logger.debug(f"request {request}")
 
     session = await get_session(request)
-    logger.debug(f"session {session}")
     
     admin = session.get("admin")
-    logger.debug(f"admin {admin}")
 
     if not admin:
         return error_json_response(
