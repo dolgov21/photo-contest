@@ -57,6 +57,14 @@ class AdminCurrentView(View):
         return json_response(admin)
 
 
+def _format_deadline(contest):
+    return (
+        contest.registration_deadline.isoformat()
+        if contest.registration_deadline
+        else None
+    )
+
+
 class AdminContestsView(View):
     @docs(tags=["admin"], summary="Get all contests")
     @response_schema(ContestsResponseSchema, 200)
@@ -70,10 +78,7 @@ class AdminContestsView(View):
                         "chat_id": c.chat_id,
                         "current_round": c.current_round,
                         "is_active": c.is_active,
-                        "registration_deadline": 
-                            c.registration_deadline.isoformat()
-                        if c.registration_deadline
-                        else None,
+                        "registration_deadline": _format_deadline(c),
                         "creator_id": c.creator_id,
                     }
                     for c in contests
