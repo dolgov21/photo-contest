@@ -60,6 +60,29 @@ class DatabaseAccessor:
             await session.refresh(contest)
         return contest
 
+    async def get_contest_with_details(
+        self, contest_id: int
+    ) -> ContestModel | None:
+        async with self.app.database.sessionmaker() as session:
+            query = (
+                select(ContestModel)
+                .where(ContestModel.contest_id == contest_id)
+                .options(
+                    selectinload(ContestModel.rounds)
+                    .selectinload(RoundModel.matches)
+                    .selectinload(MatchModel.user1),
+                    selectinload(ContestModel.rounds)
+                    .selectinload(RoundModel.matches)
+                    .selectinload(MatchModel.user2),
+                    selectinload(ContestModel.rounds)
+                    .selectinload(RoundModel.matches)
+                    .selectinload(MatchModel.winner),
+                    selectinload(ContestModel.participants),
+                )
+            )
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
+
     async def is_user_in_contest(self, user_id: int, contest_id: int) -> bool:
         async with self.app.database.sessionmaker() as session:
             query = select(ContestsParticipantsModel).where(
