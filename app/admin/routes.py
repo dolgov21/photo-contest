@@ -8,11 +8,11 @@ __all__ = ("register_urls",)
 
 def register_urls(app: "Application"):
     from app.admin.views import (
-        AdminLoginView,
-        AdminCurrentView,
-        AdminCreateUserView,
         AdminContestsView,
+        AdminCreateUserView,
+        AdminCurrentView,
         AdminDeleteContestView,
+        AdminLoginView,
     )
 
     app.router.add_view("/admin.login", AdminLoginView)

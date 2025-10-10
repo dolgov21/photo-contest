@@ -1,24 +1,24 @@
 import asyncio
 import logging
 
-from aiohttp_apispec import setup_aiohttp_apispec
 from aiohttp.web import (
     Application as AiohttpApplication,
     Request as AiohttpRequest,
     View as AiohttpView,
     run_app,
 )
+from aiohttp_apispec import setup_aiohttp_apispec
 from loguru import logger
 
-from app.db.models.admin import AdminModel
 from app.bot.updates_handler import UpdatesHandler, setup_handler
 from app.config import Config, setup_config
 from app.db.database import Database, setup_database
+from app.db.models.admin import AdminModel
 from app.poller.poller import UpdatesPoller, setup_poller
 from app.store.store import Store, setup_store
-from app.web.session import setup_session
 from app.web.mw import setup_middlewares
 from app.web.routes import setup_routes
+from app.web.session import setup_session
 
 
 class Application(AiohttpApplication):
@@ -64,7 +64,9 @@ def setup_logging():
                 level = logger.level(record.levelname).name
             except ValueError:
                 level = record.levelno
-            logger.opt(depth=6, exception=record.exc_info).log(level, record.getMessage())
+            logger.opt(depth=6, exception=record.exc_info).log(
+                level, record.getMessage()
+            )
 
     logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
 
@@ -76,7 +78,7 @@ def setup_logging():
 
 def setup_app(config_path: str) -> Application:
     setup_logging()
-    
+
     setup_aiohttp_apispec(
         app=app,
         title="Admin API",

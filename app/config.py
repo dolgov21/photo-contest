@@ -1,6 +1,6 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-from collections.abc import Callable
 
 from dotenv import load_dotenv
 from pyaml_env import parse_config
@@ -64,9 +64,7 @@ def load_config(config_path: str) -> Config:
     raw_config = parse_config(config_path)
 
     return Config(
-        session=SessionConfig(
-            key=raw_config["session"]["key"]
-        ),
+        session=SessionConfig(key=raw_config["session"]["key"]),
         admin=AdminConfig(
             login=raw_config["admin"].get("login", "admin"),
             password=raw_config["admin"].get("password", "123456"),
@@ -74,7 +72,7 @@ def load_config(config_path: str) -> Config:
         web=WebConfig(
             host=raw_config["web"]["host"],
             port=raw_config["web"]["port"],
-            print=print if raw_config["web"]["print"] else None
+            print=print if raw_config["web"]["print"] else None,
         ),
         database=DatabaseConfig(
             host=raw_config["database"]["host"],

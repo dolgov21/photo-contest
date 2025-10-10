@@ -60,7 +60,9 @@ class DatabaseAccessor:
             await session.refresh(contest)
         return contest
 
-    async def get_contest_with_details(self, contest_id: int) -> ContestModel | None:
+    async def get_contest_with_details(
+        self, contest_id: int
+    ) -> ContestModel | None:
         async with self.app.database.sessionmaker() as session:
             query = (
                 select(ContestModel)

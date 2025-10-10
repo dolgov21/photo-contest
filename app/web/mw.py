@@ -1,12 +1,11 @@
 import json
 import typing
 
-from loguru import logger
-from pydantic import ValidationError
-from aiohttp.web_exceptions import HTTPUnprocessableEntity, HTTPException
-from aiohttp_session import get_session
+from aiohttp.web_exceptions import HTTPUnprocessableEntity
 from aiohttp.web_middlewares import middleware
 from aiohttp_apispec import validation_middleware
+from aiohttp_session import get_session
+from pydantic import ValidationError
 
 from app.web.utils import error_json_response
 
@@ -36,17 +35,13 @@ async def error_handling_middleware(request: "Request", handler):
             message=e.reason,
             data=json.loads(e.text),
         )
-    except ValidationError as e:
+    except ValidationError:
         return error_json_response(
             http_status=400,
             status=HTTP_ERROR_CODES[400],
             message="Unprocessable Entity",
-            data={'json': {'login': ['Missing data for required field.']}},
+            data={"json": {"login": ["Missing data for required field."]}},
         )
-    # except HTTPException as e:
-    #     return error_json_response(http_status=e.status, status='HTTP error', message=str(e))
-    # except Exception as e:
-    #     return error_json_response(http_status=500, status='internal server error', message=str(e))
 
     return response
 
@@ -57,14 +52,14 @@ async def auth_middleware(request, handler):
         return await handler(request)
 
     session = await get_session(request)
-    
+
     admin = session.get("admin")
 
     if not admin:
         return error_json_response(
             http_status=401,
             status="unauthorized",
-            message="You must be logged in"
+            message="You must be logged in",
         )
 
     request["admin"] = admin

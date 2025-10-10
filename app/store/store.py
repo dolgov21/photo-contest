@@ -6,9 +6,9 @@ if typing.TYPE_CHECKING:
 
 class Store:
     def __init__(self, app: "Application"):
+        from app.admin.accessor import AdminAccessor
         from app.bot.accessor import BotAccessor
         from app.db.accessor import DatabaseAccessor
-        from app.admin.accessor import AdminAccessor
         from app.services.tournament import TournamentService
 
         self.bot = BotAccessor(app)
