@@ -2,6 +2,6 @@ from aiohttp.web_app import Application
 
 
 def setup_routes(application: Application):
-    import app.users.routes
+    from app.admin.routes import register_urls as register_admins_urls
 
-    app.users.routes.register_urls(application)
+    register_admins_urls(application)

@@ -1,7 +1,16 @@
 debug: true
+
+session:
+  key: !ENV ${SECRET_KEY}
+
+admin:
+  login: !ENV ${ADMIN_LOGIN}
+  password: !ENV ${ADMIN_PASSWORD}
+
 web:
   host: 127.0.0.1
   port: 8000
+  print: true
 
 sentry:
   dsn:

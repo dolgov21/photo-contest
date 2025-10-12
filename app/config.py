@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -6,6 +7,24 @@ from pyaml_env import parse_config
 
 if TYPE_CHECKING:
     from app.web.app import Application
+
+
+@dataclass
+class SessionConfig:
+    key: str = "aCSiKNzcSNNTZxw496FxBivHFjEQ8SFTTmeSuy85cSc="
+
+
+@dataclass
+class AdminConfig:
+    login: str = "admin"
+    password: str = "123456"
+
+
+@dataclass
+class WebConfig:
+    host: str = "127.0.0.1"
+    port: int = 8000
+    print: Callable | None = print
 
 
 @dataclass
@@ -32,6 +51,9 @@ class DatabaseConfig:
 
 @dataclass
 class Config:
+    session: SessionConfig
+    admin: AdminConfig
+    web: WebConfig
     database: DatabaseConfig
     bot: BotConfig
     game: GameConfig
@@ -42,6 +64,16 @@ def load_config(config_path: str) -> Config:
     raw_config = parse_config(config_path)
 
     return Config(
+        session=SessionConfig(key=raw_config["session"]["key"]),
+        admin=AdminConfig(
+            login=raw_config["admin"].get("login", "admin"),
+            password=raw_config["admin"].get("password", "123456"),
+        ),
+        web=WebConfig(
+            host=raw_config["web"]["host"],
+            port=raw_config["web"]["port"],
+            print=print if raw_config["web"]["print"] else None,
+        ),
         database=DatabaseConfig(
             host=raw_config["database"]["host"],
             port=raw_config["database"]["port"],
