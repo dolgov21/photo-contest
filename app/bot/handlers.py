@@ -26,7 +26,7 @@ async def start(app: "Application", update: Update):
         "👋 Привет! Добро пожаловать в <b>Фотоконкурс</b>! 📸\n\n"
         "Бот устроит турнир на выбывание среди участников чата — "
         "кто победит, решит голосование! 🏆\n\n"
-        "Отправь <code>/start_game</code>, чтобы начать первый раунд.",
+        "Отправь /help, чтобы узнать о моих возможностях.",
         parse_mode="HTML",
     )
 
@@ -253,3 +253,17 @@ async def send_match_for_voting(
         await send_match_for_voting(app, chat_id, next_match_id)
     else:
         await app.store.bot.send_message(chat_id, "🎉 Турнир завершен!")
+
+
+@router.command("help")
+async def help_command(app: "Application", update: Update):
+    await app.store.bot.send_message(
+        update.message.chat.id,
+        "<b>📋 Список команд:</b>\n\n"
+        "/start - Знакомство с ботом\n"
+        "/start_game - 🎮 Начать игру\n"
+        "/cancel_game - ⏹️ Завершить игру досрочно\n"
+        "/help - 📖 Помощь по командам\n\n"
+        "<i>Для начала игры используйте /start_game</i>\n",
+        parse_mode="HTML",
+    )

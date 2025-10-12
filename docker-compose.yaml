@@ -9,6 +9,8 @@ services:
       - "80:8080"
     volumes:
       - ./nginx:/etc/nginx/conf.d
+    depends_on:
+      - photo-contest
 
   photo-contest:
     build: .
