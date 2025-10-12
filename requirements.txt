@@ -12,6 +12,7 @@ cffi==2.0.0
 cryptography==46.0.2
 frozenlist==1.7.0
 greenlet==3.2.4
+gunicorn==23.0.0
 idna==3.10
 Jinja2==3.1.6
 loguru==0.7.3

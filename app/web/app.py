@@ -27,6 +27,14 @@ app = Application()
 
 
 def setup_app(config_path: str):
+    logger.add(
+        "logs/app.log",
+        rotation="5MB",
+        compression="zip",
+        level="DEBUG",
+        enqueue=True,
+    )
+    
     setup_config(app, config_path)
     setup_database(app)
     setup_store(app)

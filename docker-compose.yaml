@@ -4,7 +4,11 @@ services:
     image: photo-contest
     container_name: pc-aiohttp
     restart: always
-    command: "python main.py"
+    command: > 
+      gunicorn app.web.gunicorn_app:app
+      --bind 0.0.0.0:8000
+      --worker-class aiohttp.GunicornWebWorker
+      --workers 1
     networks:
       - dbnet
     volumes:
@@ -17,6 +21,7 @@ services:
   adminer:
     image: adminer
     container_name: pc-adminer
+    restart: always
     ports:
       - "8080:8080"
     networks:
@@ -27,6 +32,7 @@ services:
   postgres:
     image: postgres:17.6
     container_name: pc-postgres
+    restart: always
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
