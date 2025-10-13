@@ -32,6 +32,32 @@ async def start(app: "Application", update: Update):
     )
 
 
+async def wait_and_start_game(app, contest, chat):
+    moscow_tz = pytz.timezone("Europe/Moscow")
+    now_moscow = datetime.now(moscow_tz)
+
+    delay = (contest.registration_deadline - now_moscow).total_seconds()
+    await asyncio.sleep(max(0, delay))
+
+    try:
+        await app.store.services.start_contest(contest.contest_id)
+
+        await app.store.bot.send_message(
+            chat.chat_id,
+            "🎯 Регистрация завершена!\n\n"
+            "Турнир начинается прямо сейчас — "
+            "готовьтесь выбирать лучшие аватарки! 🔥",
+        )
+
+        next_match_id = await app.store.services.get_next_match(contest.contest_id)
+
+        if next_match_id:
+            await send_match_for_voting(app, chat.chat_id, next_match_id)
+
+    except ValueError as e:
+        await app.store.bot.send_message(chat.chat_id, f"⚠️ {e!s}")
+
+
 @router.command("start_game")
 async def start_game(app: "Application", update: Update):
     chat = await app.store.db.get_or_create_chat(
@@ -113,33 +139,7 @@ async def start_game(app: "Application", update: Update):
         ),
     )
 
-    async def wait_and_start_game():
-        moscow_tz = pytz.timezone("Europe/Moscow")
-        now_moscow = datetime.now(moscow_tz)
-
-        delay = (contest.registration_deadline - now_moscow).total_seconds()
-        await asyncio.sleep(max(0, delay))
-
-        try:
-            await app.store.services.start_contest(contest.contest_id)
-
-            await app.store.bot.send_message(
-                chat.chat_id,
-                "🎯 Регистрация завершена!\n\n"
-                "Турнир начинается прямо сейчас — "
-                "готовьтесь выбирать лучшие аватарки! 🔥",
-            )
-
-            next_match_id = await app.store.services.get_next_match(
-                contest.contest_id
-            )
-
-            if next_match_id:
-                await send_match_for_voting(app, chat.chat_id, next_match_id)
-        except ValueError as e:
-            await app.store.bot.send_message(chat.chat_id, f"⚠️ {e!s}")
-
-    app.loop.create_task(wait_and_start_game())
+    app.loop.create_task(wait_and_start_game(app, contest, chat))
 
 
 @router.command("cancel_game")
