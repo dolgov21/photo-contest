@@ -6,6 +6,7 @@ import pytz
 
 from app.bot.router import Router
 from app.poller.schemes import Update, UserProfilePhotos
+from app.bot.unit import get_contest_games_info
 
 if typing.TYPE_CHECKING:
     from app.web.app import Application
@@ -107,14 +108,24 @@ async def apply(app: "Application", update: Update):
 
 @router.callback_startswith("dismiss")
 async def dismiss(app: "Application", update: Update):
-    chat_id = update.callback_query.message.chat.id
+    contest_id = int(update.callback_query.data.split("_")[1])
+    contest = await app.store.db.get_contest_by_id(contest_id)
 
-    # Получаем активный конкурс
-    contest = await app.store.db.get_active_contest_by_chat_id(chat_id)
     if not contest or not getattr(contest, "is_active", False):
         await app.store.bot.answer_callback_query(
             update.callback_query.id,
-            "⚠️ Конкурс уже завершён или недоступен.",
+            "⚠️ Этот конкурс уже завершён или недоступен.",
+            show_alert=False,
+        )
+        return
+
+    moscow_tz = pytz.timezone("Europe/Moscow")
+    now_moscow = datetime.now(moscow_tz)
+
+    if contest.registration_deadline < now_moscow:
+        await app.store.bot.answer_callback_query(
+            update.callback_query.id,
+            "🚫 Регистрация уже завершена.",
             show_alert=False,
         )
         return
@@ -156,7 +167,7 @@ async def dismiss(app: "Application", update: Update):
 
     try:
         await app.store.bot.edit_message_text(
-            chat_id=chat_id,
+            chat_id=contest.chat_id,
             message_id=update.callback_query.message.message_id,
             text=text,
             parse_mode="HTML",
@@ -165,44 +176,6 @@ async def dismiss(app: "Application", update: Update):
     except Exception as e:
         if "message is not modified" not in str(e).lower():
             raise
-
-
-async def get_contest_games_info(app: "Application", contest_id: int) -> str:
-    contest = await app.store.db.get_contest_with_details(contest_id)
-    if not contest:
-        return "Информация о играх недоступна."
-
-    info_parts = ["📊 <b>Статистика конкурса:</b>"]
-
-    participants = contest.participants
-    info_parts.append(f"👥 Участников: {len(participants)}")
-
-    if contest.rounds:
-        info_parts.append(f"🎯 Текущий раунд: {contest.current_round or 0}")
-
-        total_matches = 0
-        finished_matches = 0
-        active_matches = 0
-
-        for round_obj in contest.rounds:
-            total_matches += len(round_obj.matches)
-            finished_matches += sum(
-                1 for match in round_obj.matches if match.is_finished
-            )
-            active_matches += sum(
-                1 for match in round_obj.matches if not match.is_finished
-            )
-
-        info_parts.append(f"⚔️ Создано матчей: {total_matches}")
-
-        if finished_matches > 0:
-            info_parts.append(f"✅ Завершено: {finished_matches}")
-        if active_matches > 0:
-            info_parts.append(f"🔄 Активных: {active_matches}")
-    else:
-        info_parts.append("📝 Раунды еще не созданы")
-
-    return "\n".join(info_parts)
 
 
 @router.callback("cancel_game")

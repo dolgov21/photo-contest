@@ -5,6 +5,7 @@ from datetime import datetime
 import pytz
 
 from app.bot.router import Router
+from app.bot.unit import get_contest_games_info
 from app.poller.schemes import (
     InlineKeyboard,
     InlineKeyboardButton,
@@ -241,9 +242,10 @@ async def send_match_for_voting(
     await app.store.bot.edit_message_text(
         chat_id=chat_id,
         message_id=voting_message_id,
-        text=f"🏁 Победил {winner.first_name}!\n\n"
-        f"Голоса: \n• {user1.first_name} - {votes1} "
-        f"❤️ \n• {user2.first_name} - {votes2} 💙",
+        text=f"Голоса: \n"
+        f"• {user1.first_name} - {votes1} ❤️\n"
+        f"• {user2.first_name} - {votes2} 💙\n\n"
+        f"В битве между <code>{user1.first_name}</code> и <code>{user2.first_name}</code> победил <b>{winner.first_name}</b> 🥇",
     )
 
     next_match_id = await app.store.services.get_next_match(
@@ -252,18 +254,40 @@ async def send_match_for_voting(
     if next_match_id:
         await send_match_for_voting(app, chat_id, next_match_id)
     else:
-        await app.store.bot.send_message(chat_id, "🎉 Турнир завершен!")
+        await app.store.db.deactivate_contest(match.round.contest.contest_id)
+        
+        contest_report = await get_contest_games_info(app, match.round.contest.contest_id)
+        await app.store.bot.send_message(
+            chat_id,
+            f"🎉 Турнир завершен! В этой игре победу одержал <b>{winner.first_name}</b> 🏆\n\n"
+            f"{contest_report}"
+        )
 
 
 @router.command("help")
 async def help_command(app: "Application", update: Update):
+    help_text = (
+        "🤖 <b>Список команд:</b>\n\n"
+        "🚀 /start — Знакомство с ботом\n"
+        "🎮 /start_game — Начать игру\n"
+        "⏹️ /cancel_game — Завершить игру досрочно\n"
+        "❓ /help — Помощь по командам\n\n"
+        "💡 <i>Для начала игры используйте /start_game</i>\n\n"
+        "📜 <b>Правила игры:</b>\n"
+        "1️⃣ Формируется турнирная сетка на выбывание " 
+        "среди пользователей чата 👥\n"
+        "2️⃣ Отправляется пара аватарок n-ого равнда и "
+        "запускается голосование 🗳️\n"
+        "3️⃣ Участники голосуют за понравившуюся аватарку 👍\n"
+        "4️⃣ По истечению определенного времени "
+        "определяется победитель отдельного матча 🏆\n"
+        "5️⃣ Победитель проходит в следующий раунд 🎯, "
+        "проигравший выбывает 😢\n\n"
+        "🎉 <b>Удачи в игре!</b> 🎉"
+    )
+    
     await app.store.bot.send_message(
         update.message.chat.id,
-        "<b>📋 Список команд:</b>\n\n"
-        "/start - Знакомство с ботом\n"
-        "/start_game - 🎮 Начать игру\n"
-        "/cancel_game - ⏹️ Завершить игру досрочно\n"
-        "/help - 📖 Помощь по командам\n\n"
-        "<i>Для начала игры используйте /start_game</i>\n",
+        help_text,
         parse_mode="HTML",
     )
