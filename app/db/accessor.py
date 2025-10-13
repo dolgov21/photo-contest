@@ -174,7 +174,10 @@ class DatabaseAccessor:
             query = (
                 select(ContestModel)
                 .where(ContestModel.contest_id == contest_id)
-                .options(selectinload(ContestModel.rounds))
+                .options(
+                    selectinload(ContestModel.rounds),
+                    selectinload(ContestModel.chat)
+                )
             )
             result = await session.execute(query)
             return result.scalar_one_or_none()

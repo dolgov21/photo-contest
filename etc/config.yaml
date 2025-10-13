@@ -29,7 +29,7 @@ bot:
   timeout: 25
 
 game:
-  voting_time: 10
-  registration_time: 15
+  voting_time: 15
+  registration_time: 22
 
 store: {}

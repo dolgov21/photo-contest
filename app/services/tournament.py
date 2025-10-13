@@ -38,7 +38,7 @@ class TournamentService:
                 (bye_participant, bye_participant)
             )  # Автоматический проход
 
-        bracket = [
+        bracket += [
             (participants[i], participants[i + 1])
             for i in range(0, len(participants), 2)
             if i + 1 < len(participants)
@@ -58,11 +58,11 @@ class TournamentService:
     async def start_contest(self, contest_id: int):
         contest = await self.app.store.db.get_contest_by_id(contest_id)
 
-        moscow_tz = pytz.timezone("Europe/Moscow")
-        now_moscow = datetime.now(moscow_tz)
+        # moscow_tz = pytz.timezone("Europe/Moscow")
+        # now_moscow = datetime.now(moscow_tz)
 
-        if now_moscow + timedelta(seconds=2) < contest.registration_deadline:
-            raise ValueError("Не возможно начать игру, регистрация ещё идёт")
+        # if now_moscow + timedelta(seconds=2) < contest.registration_deadline:
+        #     raise ValueError("Не возможно начать игру, регистрация ещё идёт")
 
         participants = await self.app.store.db.get_contest_participants(
             contest_id
@@ -74,6 +74,21 @@ class TournamentService:
         round_model = await self.app.store.db.create_round(contest_id, 1)
 
         bracket = self.generate_bracket(participants)
+        
+        round_text = [f"🎯 Регистрация завершена! Турнир начинается прямо сейчас — готовьтесь выбирать лучшие аватарки! 🔥\n\n🏁 <b>Раунд 1.</b> Соревнуются:"]
+        for user1, user2 in bracket:
+            if user1.user_id != user2.user_id:
+                round_text.append(f"• <b>{user1.first_name}</b> vs <b>{user2.first_name}</b>")
+            if user1 == user2:
+                round_text.append(f"• <b>{user1.first_name}</b> пропускает игру 🥲")
+
+        chat = contest.chat
+        if chat:
+            await self.app.store.bot.send_message(
+                chat.chat_id,
+                "\n".join(round_text),
+                parse_mode="HTML",
+            )
 
         for user1, user2 in bracket:
             if user1 != user2:
@@ -129,7 +144,8 @@ class TournamentService:
                     .options(
                         selectinload(ContestModel.rounds).selectinload(
                             RoundModel.matches
-                        )
+                        ),
+                        selectinload(ContestModel.chat)
                     )
                     .where(ContestModel.contest_id == contest_id)
                 )
@@ -185,6 +201,22 @@ class TournamentService:
                 winners_objects = winners_result.scalars().all()
 
                 new_bracket = self.generate_bracket(winners_objects)
+                
+                round_text = [f"🏁 Раунд {new_round_number}\n\nСоревнуются:"]
+                for user1, user2 in new_bracket:
+                    if user1.user_id == user2.user_id:
+                        round_text.append(f"• {user1.first_name} проходит дальше")
+                    else:
+                        round_text.append(f"• <b>{user1.first_name}</b> vs <b>{user2.first_name}</b>")
+
+                chat = contest.chat
+                if chat:
+                    await self.app.store.bot.send_message(
+                        chat.chat_id,
+                        "\n".join(round_text),
+                        parse_mode="HTML",
+                    )
+                
                 logger.info(
                     f"Creating round {new_round_number} with "
                     f"{len(winners_objects)} winners: "

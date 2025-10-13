@@ -42,12 +42,12 @@ async def wait_and_start_game(app, contest, chat):
     try:
         await app.store.services.start_contest(contest.contest_id)
 
-        await app.store.bot.send_message(
-            chat.chat_id,
-            "🎯 Регистрация завершена!\n\n"
-            "Турнир начинается прямо сейчас — "
-            "готовьтесь выбирать лучшие аватарки! 🔥",
-        )
+        # await app.store.bot.send_message(
+        #     chat.chat_id,
+        #     "🎯 Регистрация завершена!\n\n"
+        #     "Турнир начинается прямо сейчас — "
+        #     "готовьтесь выбирать лучшие аватарки! 🔥",
+        # )
 
         next_match_id = await app.store.services.get_next_match(contest.contest_id)
 
@@ -56,6 +56,7 @@ async def wait_and_start_game(app, contest, chat):
 
     except ValueError as e:
         await app.store.bot.send_message(chat.chat_id, f"⚠️ {e!s}")
+        await app.store.db.deactivate_contest(contest.contest_id)
 
 
 @router.command("start_game")
@@ -96,6 +97,7 @@ async def start_game(app: "Application", update: Update):
                     message_id=update.message.message_id
                 ),
             )
+            return
         else:
             await app.store.db.deactivate_contest(active_contest.contest_id)
 
@@ -254,9 +256,9 @@ async def send_match_for_voting(
     if next_match_id:
         await send_match_for_voting(app, chat_id, next_match_id)
     else:
-        await app.store.db.deactivate_contest(match.round.contest.contest_id)
-        
         contest_report = await get_contest_games_info(app, match.round.contest.contest_id)
+        
+        await app.store.db.deactivate_contest(match.round.contest.contest_id)
         await app.store.bot.send_message(
             chat_id,
             f"🎉 Турнир завершен! В этой игре победу одержал <b>{winner.first_name}</b> 🏆\n\n"
